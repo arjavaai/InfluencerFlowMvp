@@ -251,6 +251,7 @@ export function CampaignManagement({ onSectionChange }: CampaignManagementProps 
                     <Button 
                       className="h-auto p-4 flex flex-col items-center space-y-2"
                       onClick={() => {
+                        console.log("Find Creators clicked");
                         setIsManageOpen(false);
                         onSectionChange?.("creators");
                       }}

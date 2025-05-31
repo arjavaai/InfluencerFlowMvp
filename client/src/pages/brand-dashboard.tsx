@@ -31,7 +31,7 @@ export default function BrandDashboard() {
   const renderContent = () => {
     switch (activeSection) {
       case "campaigns":
-        return <CampaignManagement />;
+        return <CampaignManagement onSectionChange={setActiveSection} />;
       case "creators":
         return <CreatorSearch />;
       case "offers":
