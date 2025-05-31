@@ -20,7 +20,7 @@ export function OffersManagement() {
   const generateContractMutation = useMutation({
     mutationFn: async (offerId: number) => {
       const offer = offers?.find((o: any) => o.id === offerId);
-      return await apiRequest(`/api/contracts`, "POST", {
+      return await apiRequest("POST", "/api/contracts", {
         offerId,
         finalAmount: offer?.amount,
         terms: "Standard influencer partnership terms and conditions apply."
