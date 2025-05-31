@@ -176,6 +176,106 @@ export function CampaignManagement() {
         </div>
       </div>
 
+      {/* Campaign Management Dialog */}
+      <Dialog open={isManageOpen} onOpenChange={setIsManageOpen}>
+        <DialogContent className="sm:max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Manage Campaign: {selectedCampaign?.name}</DialogTitle>
+          </DialogHeader>
+          {selectedCampaign && (
+            <div className="space-y-6">
+              {/* Campaign Overview */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-600">${selectedCampaign.budget}</div>
+                      <div className="text-sm text-gray-600">Total Budget</div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-600">0</div>
+                      <div className="text-sm text-gray-600">Active Offers</div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-purple-600">0</div>
+                      <div className="text-sm text-gray-600">Signed Contracts</div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Campaign Details */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Campaign Details</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Objective</label>
+                      <p className="text-gray-900">{selectedCampaign.objective}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                      <Badge className={getStatusColor(selectedCampaign.status)}>
+                        {selectedCampaign.status}
+                      </Badge>
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                      <p className="text-gray-900">{selectedCampaign.description || "No description provided"}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Quick Actions */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Quick Actions</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Button className="h-auto p-4 flex flex-col items-center space-y-2">
+                      <Plus className="h-6 w-6" />
+                      <span>Find Creators</span>
+                      <span className="text-xs text-gray-600">Browse and send offers</span>
+                    </Button>
+                    <Button variant="outline" className="h-auto p-4 flex flex-col items-center space-y-2">
+                      <Megaphone className="h-6 w-6" />
+                      <span>View Offers</span>
+                      <span className="text-xs text-gray-600">Manage sent offers</span>
+                    </Button>
+                    <Button variant="outline" className="h-auto p-4 flex flex-col items-center space-y-2">
+                      <Megaphone className="h-6 w-6" />
+                      <span>Campaign Analytics</span>
+                      <span className="text-xs text-gray-600">View performance</span>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="flex justify-end space-x-3">
+                <Button variant="outline" onClick={() => setIsManageOpen(false)}>
+                  Close
+                </Button>
+                <Button>
+                  Edit Campaign
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {campaigns?.map((campaign: any) => (
           <Card key={campaign.id} className="hover:shadow-md transition-shadow duration-200">
