@@ -29,10 +29,11 @@ import { eq, and, desc, sql, ilike } from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
-  // User operations (mandatory for Replit Auth)
-  getUser(id: string): Promise<User | undefined>;
-  upsertUser(user: UpsertUser): Promise<User>;
-  updateUserRole(id: string, role: string): Promise<User>;
+  // User operations for email/password auth
+  getUser(id: number): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  createUser(user: UpsertUser): Promise<User>;
+  updateUserRole(id: number, role: string): Promise<User>;
   
   // Creator operations
   getCreators(filters?: { niche?: string; minFollowers?: number; maxFollowers?: number; location?: string }): Promise<Creator[]>;
