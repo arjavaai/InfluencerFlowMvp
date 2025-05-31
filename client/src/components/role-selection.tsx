@@ -13,7 +13,7 @@ export function RoleSelection() {
 
   const selectRoleMutation = useMutation({
     mutationFn: async (role: string) => {
-      return await apiRequest(`/api/user/role`, "POST", { role });
+      return await apiRequest("POST", `/api/user/role`, { role });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
