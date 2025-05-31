@@ -8,7 +8,6 @@ import {
   payments,
   performanceReports,
   type User,
-  type UpsertUser,
   type Creator,
   type Brand,
   type Campaign,
@@ -16,6 +15,7 @@ import {
   type Contract,
   type Payment,
   type PerformanceReport,
+  type UpsertUser,
   type InsertCreator,
   type InsertBrand,
   type InsertCampaign,
@@ -26,6 +26,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, ilike } from "drizzle-orm";
+import { hashPassword } from "./auth";
 
 // Interface for storage operations
 export interface IStorage {
@@ -38,12 +39,12 @@ export interface IStorage {
   // Creator operations
   getCreators(filters?: { niche?: string; minFollowers?: number; maxFollowers?: number; location?: string }): Promise<Creator[]>;
   getCreator(id: number): Promise<Creator | undefined>;
-  getCreatorByUserId(userId: string): Promise<Creator | undefined>;
+  getCreatorByUserId(userId: number): Promise<Creator | undefined>;
   createCreator(creator: InsertCreator): Promise<Creator>;
   
   // Brand operations
   getBrand(id: number): Promise<Brand | undefined>;
-  getBrandByUserId(userId: string): Promise<Brand | undefined>;
+  getBrandByUserId(userId: number): Promise<Brand | undefined>;
   createBrand(brand: InsertBrand): Promise<Brand>;
   
   // Campaign operations
@@ -80,31 +81,29 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
-  // User operations (mandatory for Replit Auth)
-  async getUser(id: string): Promise<User | undefined> {
+  // User operations for email/password auth
+  async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
   }
 
-  async upsertUser(userData: UpsertUser): Promise<User> {
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async createUser(userData: UpsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
       .values(userData)
-      .onConflictDoUpdate({
-        target: users.id,
-        set: {
-          ...userData,
-          updatedAt: new Date(),
-        },
-      })
       .returning();
     return user;
   }
 
-  async updateUserRole(id: string, role: string): Promise<User> {
+  async updateUserRole(id: number, role: string): Promise<User> {
     const [user] = await db
       .update(users)
-      .set({ role: role as any, updatedAt: new Date() })
+      .set({ role: role as "brand" | "creator", updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning();
     return user;
@@ -112,22 +111,13 @@ export class DatabaseStorage implements IStorage {
 
   // Creator operations
   async getCreators(filters?: { niche?: string; minFollowers?: number; maxFollowers?: number; location?: string }): Promise<Creator[]> {
-    const conditions = [eq(creators.isActive, true)];
-
+    let query = db.select().from(creators);
+    
     if (filters?.niche) {
-      conditions.push(eq(creators.niche, filters.niche));
+      query = query.where(eq(creators.niche, filters.niche));
     }
-    if (filters?.minFollowers) {
-      conditions.push(sql`${creators.followersCount} >= ${filters.minFollowers}`);
-    }
-    if (filters?.maxFollowers) {
-      conditions.push(sql`${creators.followersCount} <= ${filters.maxFollowers}`);
-    }
-    if (filters?.location) {
-      conditions.push(ilike(creators.location, `%${filters.location}%`));
-    }
-
-    return await db.select().from(creators).where(and(...conditions)).orderBy(desc(creators.followersCount));
+    
+    return await query;
   }
 
   async getCreator(id: number): Promise<Creator | undefined> {
@@ -135,7 +125,7 @@ export class DatabaseStorage implements IStorage {
     return creator;
   }
 
-  async getCreatorByUserId(userId: string): Promise<Creator | undefined> {
+  async getCreatorByUserId(userId: number): Promise<Creator | undefined> {
     const [creator] = await db.select().from(creators).where(eq(creators.userId, userId));
     return creator;
   }
@@ -151,7 +141,7 @@ export class DatabaseStorage implements IStorage {
     return brand;
   }
 
-  async getBrandByUserId(userId: string): Promise<Brand | undefined> {
+  async getBrandByUserId(userId: number): Promise<Brand | undefined> {
     const [brand] = await db.select().from(brands).where(eq(brands.userId, userId));
     return brand;
   }
@@ -163,7 +153,7 @@ export class DatabaseStorage implements IStorage {
 
   // Campaign operations
   async getCampaigns(brandId: number): Promise<Campaign[]> {
-    return await db.select().from(campaigns).where(eq(campaigns.brandId, brandId)).orderBy(desc(campaigns.createdAt));
+    return await db.select().from(campaigns).where(eq(campaigns.brandId, brandId));
   }
 
   async getCampaign(id: number): Promise<Campaign | undefined> {
@@ -177,47 +167,86 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateCampaign(id: number, updates: Partial<Campaign>): Promise<Campaign> {
-    const [updatedCampaign] = await db
+    const [campaign] = await db
       .update(campaigns)
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(campaigns.id, id))
       .returning();
-    return updatedCampaign;
+    return campaign;
   }
 
   // Offer operations
   async getOffers(filters?: { campaignId?: number; creatorId?: number; status?: string }): Promise<(Offer & { creator: Creator; campaign: Campaign & { brand: Brand } })[]> {
-    const conditions = [];
-
-    if (filters?.campaignId) {
-      conditions.push(eq(offers.campaignId, filters.campaignId));
-    }
-    if (filters?.creatorId) {
-      conditions.push(eq(offers.creatorId, filters.creatorId));
-    }
-    if (filters?.status) {
-      conditions.push(eq(offers.status, filters.status as any));
-    }
-
-    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
-
-    const results = await db
-      .select()
+    let query = db
+      .select({
+        id: offers.id,
+        campaignId: offers.campaignId,
+        creatorId: offers.creatorId,
+        amount: offers.amount,
+        deliverables: offers.deliverables,
+        deadline: offers.deadline,
+        terms: offers.terms,
+        status: offers.status,
+        message: offers.message,
+        createdAt: offers.createdAt,
+        updatedAt: offers.updatedAt,
+        creator: {
+          id: creators.id,
+          userId: creators.userId,
+          username: creators.username,
+          displayName: creators.displayName,
+          bio: creators.bio,
+          niche: creators.niche,
+          followersCount: creators.followersCount,
+          engagementRate: creators.engagementRate,
+          averageRate: creators.averageRate,
+          location: creators.location,
+          profileImageUrl: creators.profileImageUrl,
+          tags: creators.tags,
+          isActive: creators.isActive,
+          createdAt: creators.createdAt,
+        },
+        campaign: {
+          id: campaigns.id,
+          brandId: campaigns.brandId,
+          title: campaigns.title,
+          description: campaigns.description,
+          budget: campaigns.budget,
+          targetAudience: campaigns.targetAudience,
+          deliverables: campaigns.deliverables,
+          timeline: campaigns.timeline,
+          status: campaigns.status,
+          createdAt: campaigns.createdAt,
+          updatedAt: campaigns.updatedAt,
+          brand: {
+            id: brands.id,
+            userId: brands.userId,
+            companyName: brands.companyName,
+            industry: brands.industry,
+            description: brands.description,
+            website: brands.website,
+            logoUrl: brands.logoUrl,
+            createdAt: brands.createdAt,
+          }
+        }
+      })
       .from(offers)
       .leftJoin(creators, eq(offers.creatorId, creators.id))
       .leftJoin(campaigns, eq(offers.campaignId, campaigns.id))
-      .leftJoin(brands, eq(campaigns.brandId, brands.id))
-      .where(whereClause)
-      .orderBy(desc(offers.createdAt));
-    
-    return results.map(result => ({
-      ...result.offers,
-      creator: result.creators!,
-      campaign: {
-        ...result.campaigns!,
-        brand: result.brands!,
-      },
-    }));
+      .leftJoin(brands, eq(campaigns.brandId, brands.id));
+
+    if (filters?.campaignId) {
+      query = query.where(eq(offers.campaignId, filters.campaignId));
+    }
+    if (filters?.creatorId) {
+      query = query.where(eq(offers.creatorId, filters.creatorId));
+    }
+    if (filters?.status) {
+      query = query.where(eq(offers.status, filters.status));
+    }
+
+    const results = await query;
+    return results as any;
   }
 
   async getOffer(id: number): Promise<Offer | undefined> {
@@ -231,48 +260,93 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateOffer(id: number, updates: Partial<Offer>): Promise<Offer> {
-    const [updatedOffer] = await db
+    const [offer] = await db
       .update(offers)
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(offers.id, id))
       .returning();
-    return updatedOffer;
+    return offer;
   }
 
   // Contract operations
   async getContracts(filters?: { brandId?: number; creatorId?: number }): Promise<(Contract & { offer: Offer & { creator: Creator; campaign: Campaign & { brand: Brand } } })[]> {
-    const conditions = [];
-
-    if (filters?.brandId) {
-      conditions.push(eq(brands.id, filters.brandId));
-    }
-    if (filters?.creatorId) {
-      conditions.push(eq(creators.id, filters.creatorId));
-    }
-
-    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
-
-    const results = await db
-      .select()
+    let query = db
+      .select({
+        id: contracts.id,
+        offerId: contracts.offerId,
+        terms: contracts.terms,
+        signedByCreator: contracts.signedByCreator,
+        signedByBrand: contracts.signedByBrand,
+        status: contracts.status,
+        createdAt: contracts.createdAt,
+        offer: {
+          id: offers.id,
+          campaignId: offers.campaignId,
+          creatorId: offers.creatorId,
+          amount: offers.amount,
+          deliverables: offers.deliverables,
+          deadline: offers.deadline,
+          terms: offers.terms,
+          status: offers.status,
+          message: offers.message,
+          createdAt: offers.createdAt,
+          updatedAt: offers.updatedAt,
+          creator: {
+            id: creators.id,
+            userId: creators.userId,
+            username: creators.username,
+            displayName: creators.displayName,
+            bio: creators.bio,
+            niche: creators.niche,
+            followersCount: creators.followersCount,
+            engagementRate: creators.engagementRate,
+            averageRate: creators.averageRate,
+            location: creators.location,
+            profileImageUrl: creators.profileImageUrl,
+            tags: creators.tags,
+            isActive: creators.isActive,
+            createdAt: creators.createdAt,
+          },
+          campaign: {
+            id: campaigns.id,
+            brandId: campaigns.brandId,
+            title: campaigns.title,
+            description: campaigns.description,
+            budget: campaigns.budget,
+            targetAudience: campaigns.targetAudience,
+            deliverables: campaigns.deliverables,
+            timeline: campaigns.timeline,
+            status: campaigns.status,
+            createdAt: campaigns.createdAt,
+            updatedAt: campaigns.updatedAt,
+            brand: {
+              id: brands.id,
+              userId: brands.userId,
+              companyName: brands.companyName,
+              industry: brands.industry,
+              description: brands.description,
+              website: brands.website,
+              logoUrl: brands.logoUrl,
+              createdAt: brands.createdAt,
+            }
+          }
+        }
+      })
       .from(contracts)
       .leftJoin(offers, eq(contracts.offerId, offers.id))
       .leftJoin(creators, eq(offers.creatorId, creators.id))
       .leftJoin(campaigns, eq(offers.campaignId, campaigns.id))
-      .leftJoin(brands, eq(campaigns.brandId, brands.id))
-      .where(whereClause)
-      .orderBy(desc(contracts.createdAt));
-    
-    return results.map(result => ({
-      ...result.contracts,
-      offer: {
-        ...result.offers!,
-        creator: result.creators!,
-        campaign: {
-          ...result.campaigns!,
-          brand: result.brands!,
-        },
-      },
-    }));
+      .leftJoin(brands, eq(campaigns.brandId, brands.id));
+
+    if (filters?.brandId) {
+      query = query.where(eq(campaigns.brandId, filters.brandId));
+    }
+    if (filters?.creatorId) {
+      query = query.where(eq(offers.creatorId, filters.creatorId));
+    }
+
+    const results = await query;
+    return results as any;
   }
 
   async getContract(id: number): Promise<Contract | undefined> {
@@ -291,52 +365,26 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateContract(id: number, updates: Partial<Contract>): Promise<Contract> {
-    const [updatedContract] = await db
+    const [contract] = await db
       .update(contracts)
       .set(updates)
       .where(eq(contracts.id, id))
       .returning();
-    return updatedContract;
+    return contract;
   }
 
   // Payment operations
   async getPayments(filters?: { brandId?: number; creatorId?: number; status?: string }): Promise<(Payment & { contract: Contract & { offer: Offer & { creator: Creator; campaign: Campaign } } })[]> {
-    const conditions = [];
-
-    if (filters?.brandId) {
-      conditions.push(eq(brands.id, filters.brandId));
-    }
-    if (filters?.creatorId) {
-      conditions.push(eq(creators.id, filters.creatorId));
-    }
-    if (filters?.status) {
-      conditions.push(eq(payments.status, filters.status as any));
-    }
-
-    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
-
-    const results = await db
+    let query = db
       .select()
       .from(payments)
       .leftJoin(contracts, eq(payments.contractId, contracts.id))
       .leftJoin(offers, eq(contracts.offerId, offers.id))
       .leftJoin(creators, eq(offers.creatorId, creators.id))
-      .leftJoin(campaigns, eq(offers.campaignId, campaigns.id))
-      .leftJoin(brands, eq(campaigns.brandId, brands.id))
-      .where(whereClause)
-      .orderBy(desc(payments.createdAt));
-    
-    return results.map(result => ({
-      ...result.payments,
-      contract: {
-        ...result.contracts!,
-        offer: {
-          ...result.offers!,
-          creator: result.creators!,
-          campaign: result.campaigns!,
-        },
-      },
-    }));
+      .leftJoin(campaigns, eq(offers.campaignId, campaigns.id));
+
+    const results = await query;
+    return results as any;
   }
 
   async getPayment(id: number): Promise<Payment | undefined> {
@@ -350,12 +398,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updatePayment(id: number, updates: Partial<Payment>): Promise<Payment> {
-    const [updatedPayment] = await db
+    const [payment] = await db
       .update(payments)
       .set(updates)
       .where(eq(payments.id, id))
       .returning();
-    return updatedPayment;
+    return payment;
   }
 
   // Performance report operations
@@ -368,61 +416,140 @@ export class DatabaseStorage implements IStorage {
     return newReport;
   }
 
-  // Seed data for demo
+  // Seeding operation
   async seedData(): Promise<void> {
-    // Clear existing data
-    await db.delete(performanceReports);
-    await db.delete(payments);
-    await db.delete(contracts);
-    await db.delete(offers);
-    await db.delete(campaigns);
-    await db.delete(creators);
-    await db.delete(brands);
-
-    // Seed creators
-    const creatorsData = [
+    // Create users with proper email/password authentication
+    const demoUsers = [
       {
-        userId: "creator1",
-        username: "maya_lifestyle",
-        displayName: "Maya Johnson",
-        bio: "Lifestyle content creator sharing fashion, travel, and daily inspiration",
-        niche: "Lifestyle",
-        followersCount: 125000,
-        engagementRate: "4.2",
-        averageRate: "500",
-        location: "Los Angeles, CA",
-        profileImageUrl: "https://images.unsplash.com/photo-1494790108755-2616b612b6e9?w=400&h=400&fit=crop&crop=face",
-        tags: ["Fashion", "Lifestyle", "Travel"],
+        email: "sarah@example.com",
+        password: await hashPassword("password123"),
+        firstName: "Sarah",
+        lastName: "Johnson",
+        role: "creator" as const,
       },
       {
-        userId: "creator2",
-        username: "alex_tech",
-        displayName: "Alex Chen",
-        bio: "Tech reviewer and gadget enthusiast",
-        niche: "Tech",
-        followersCount: 89000,
-        engagementRate: "3.8",
-        averageRate: "750",
-        location: "San Francisco, CA",
-        profileImageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face",
-        tags: ["Tech", "Reviews", "Gadgets"],
+        email: "mike@example.com", 
+        password: await hashPassword("password123"),
+        firstName: "Mike",
+        lastName: "Chen",
+        role: "creator" as const,
       },
       {
-        userId: "creator3",
-        username: "sarah_fit",
-        displayName: "Sarah Williams",
-        bio: "Fitness trainer and wellness advocate",
-        niche: "Fitness",
-        followersCount: 200000,
-        engagementRate: "5.1",
-        averageRate: "650",
-        location: "Miami, FL",
-        profileImageUrl: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&crop=face",
-        tags: ["Fitness", "Wellness", "Health"],
+        email: "emma@example.com",
+        password: await hashPassword("password123"),
+        firstName: "Emma",
+        lastName: "Rodriguez",
+        role: "creator" as const,
+      },
+      {
+        email: "alex@example.com",
+        password: await hashPassword("password123"),
+        firstName: "Alex",
+        lastName: "Thompson",
+        role: "creator" as const,
+      },
+      {
+        email: "maya@example.com",
+        password: await hashPassword("password123"),
+        firstName: "Maya",
+        lastName: "Patel",
+        role: "creator" as const,
+      },
+      {
+        email: "brand@nike.com",
+        password: await hashPassword("password123"),
+        firstName: "Brand",
+        lastName: "Manager",
+        role: "brand" as const,
       }
     ];
 
-    await db.insert(creators).values(creatorsData);
+    const createdUsers = await db.insert(users).values(demoUsers).returning();
+
+    // Create creator profiles
+    const creatorProfiles = [
+      {
+        userId: createdUsers[0].id,
+        username: "@sarah_lifestyle",
+        displayName: "Sarah Johnson",
+        bio: "Lifestyle content creator sharing daily inspiration and wellness tips",
+        niche: "Lifestyle",
+        followersCount: 85000,
+        engagementRate: "4.2%",
+        averageRate: "$1,200",
+        location: "Los Angeles, CA",
+        profileImageUrl: "https://images.unsplash.com/photo-1494790108755-2616b612b5bc?w=150&h=150&fit=crop&crop=face",
+        tags: ["lifestyle", "wellness", "fashion", "travel"],
+      },
+      {
+        userId: createdUsers[1].id,
+        username: "@mike_fitness",
+        displayName: "Mike Chen",
+        bio: "Fitness coach helping people achieve their health goals",
+        niche: "Fitness",
+        followersCount: 120000,
+        engagementRate: "5.8%",
+        averageRate: "$2,000",
+        location: "New York, NY",
+        profileImageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
+        tags: ["fitness", "health", "workout", "nutrition"],
+      },
+      {
+        userId: createdUsers[2].id,
+        username: "@emma_foodie",
+        displayName: "Emma Rodriguez",
+        bio: "Food blogger showcasing delicious recipes and restaurant reviews",
+        niche: "Food",
+        followersCount: 95000,
+        engagementRate: "6.1%",
+        averageRate: "$1,500",
+        location: "Miami, FL",
+        profileImageUrl: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face",
+        tags: ["food", "recipes", "restaurants", "cooking"],
+      },
+      {
+        userId: createdUsers[3].id,
+        username: "@alex_tech",
+        displayName: "Alex Thompson",
+        bio: "Tech reviewer covering the latest gadgets and innovations",
+        niche: "Technology",
+        followersCount: 200000,
+        engagementRate: "3.9%",
+        averageRate: "$3,500",
+        location: "San Francisco, CA",
+        profileImageUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
+        tags: ["technology", "gadgets", "reviews", "innovation"],
+      },
+      {
+        userId: createdUsers[4].id,
+        username: "@maya_travel",
+        displayName: "Maya Patel",
+        bio: "Travel enthusiast sharing adventures from around the globe",
+        niche: "Travel",
+        followersCount: 150000,
+        engagementRate: "4.7%",
+        averageRate: "$2,500",
+        location: "Austin, TX",
+        profileImageUrl: "https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?w=150&h=150&fit=crop&crop=face",
+        tags: ["travel", "adventure", "culture", "photography"],
+      }
+    ];
+
+    await db.insert(creators).values(creatorProfiles);
+
+    // Create brand profile
+    const brandProfile = {
+      userId: createdUsers[5].id,
+      companyName: "Nike",
+      industry: "Sportswear",
+      description: "Global leader in athletic footwear and apparel",
+      website: "https://nike.com",
+      logoUrl: "https://logos-world.net/wp-content/uploads/2020/04/Nike-Logo.png",
+    };
+
+    await db.insert(brands).values(brandProfile);
+
+    console.log("Demo data seeded successfully!");
   }
 }
 
