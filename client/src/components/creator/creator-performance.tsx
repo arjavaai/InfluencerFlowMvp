@@ -221,7 +221,7 @@ export function CreatorPerformance() {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Response Time</span>
-                  <span className="text-sm font-medium text-green-600">< 24 hours</span>
+                  <span className="text-sm font-medium text-green-600">&lt; 24 hours</span>
                 </div>
               </div>
             </CardContent>

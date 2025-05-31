@@ -101,22 +101,22 @@ export class DatabaseStorage implements IStorage {
 
   // Creator operations
   async getCreators(filters?: { niche?: string; minFollowers?: number; maxFollowers?: number; location?: string }): Promise<Creator[]> {
-    let query = db.select().from(creators).where(eq(creators.isActive, true));
+    const conditions = [eq(creators.isActive, true)];
 
     if (filters?.niche) {
-      query = query.where(eq(creators.niche, filters.niche));
+      conditions.push(eq(creators.niche, filters.niche));
     }
     if (filters?.minFollowers) {
-      query = query.where(sql`${creators.followersCount} >= ${filters.minFollowers}`);
+      conditions.push(sql`${creators.followersCount} >= ${filters.minFollowers}`);
     }
     if (filters?.maxFollowers) {
-      query = query.where(sql`${creators.followersCount} <= ${filters.maxFollowers}`);
+      conditions.push(sql`${creators.followersCount} <= ${filters.maxFollowers}`);
     }
     if (filters?.location) {
-      query = query.where(ilike(creators.location, `%${filters.location}%`));
+      conditions.push(ilike(creators.location, `%${filters.location}%`));
     }
 
-    return await query.orderBy(desc(creators.followersCount));
+    return await db.select().from(creators).where(and(...conditions)).orderBy(desc(creators.followersCount));
   }
 
   async getCreator(id: number): Promise<Creator | undefined> {
@@ -176,24 +176,28 @@ export class DatabaseStorage implements IStorage {
 
   // Offer operations
   async getOffers(filters?: { campaignId?: number; creatorId?: number; status?: string }): Promise<(Offer & { creator: Creator; campaign: Campaign & { brand: Brand } })[]> {
-    let query = db
+    const conditions = [];
+
+    if (filters?.campaignId) {
+      conditions.push(eq(offers.campaignId, filters.campaignId));
+    }
+    if (filters?.creatorId) {
+      conditions.push(eq(offers.creatorId, filters.creatorId));
+    }
+    if (filters?.status) {
+      conditions.push(eq(offers.status, filters.status as any));
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const results = await db
       .select()
       .from(offers)
       .leftJoin(creators, eq(offers.creatorId, creators.id))
       .leftJoin(campaigns, eq(offers.campaignId, campaigns.id))
-      .leftJoin(brands, eq(campaigns.brandId, brands.id));
-
-    if (filters?.campaignId) {
-      query = query.where(eq(offers.campaignId, filters.campaignId));
-    }
-    if (filters?.creatorId) {
-      query = query.where(eq(offers.creatorId, filters.creatorId));
-    }
-    if (filters?.status) {
-      query = query.where(eq(offers.status, filters.status));
-    }
-
-    const results = await query.orderBy(desc(offers.createdAt));
+      .leftJoin(brands, eq(campaigns.brandId, brands.id))
+      .where(whereClause)
+      .orderBy(desc(offers.createdAt));
     
     return results.map(result => ({
       ...result.offers,
@@ -226,22 +230,26 @@ export class DatabaseStorage implements IStorage {
 
   // Contract operations
   async getContracts(filters?: { brandId?: number; creatorId?: number }): Promise<(Contract & { offer: Offer & { creator: Creator; campaign: Campaign & { brand: Brand } } })[]> {
-    let query = db
+    const conditions = [];
+
+    if (filters?.brandId) {
+      conditions.push(eq(brands.id, filters.brandId));
+    }
+    if (filters?.creatorId) {
+      conditions.push(eq(creators.id, filters.creatorId));
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const results = await db
       .select()
       .from(contracts)
       .leftJoin(offers, eq(contracts.offerId, offers.id))
       .leftJoin(creators, eq(offers.creatorId, creators.id))
       .leftJoin(campaigns, eq(offers.campaignId, campaigns.id))
-      .leftJoin(brands, eq(campaigns.brandId, brands.id));
-
-    if (filters?.brandId) {
-      query = query.where(eq(brands.id, filters.brandId));
-    }
-    if (filters?.creatorId) {
-      query = query.where(eq(creators.id, filters.creatorId));
-    }
-
-    const results = await query.orderBy(desc(contracts.createdAt));
+      .leftJoin(brands, eq(campaigns.brandId, brands.id))
+      .where(whereClause)
+      .orderBy(desc(contracts.createdAt));
     
     return results.map(result => ({
       ...result.contracts,
@@ -282,26 +290,30 @@ export class DatabaseStorage implements IStorage {
 
   // Payment operations
   async getPayments(filters?: { brandId?: number; creatorId?: number; status?: string }): Promise<(Payment & { contract: Contract & { offer: Offer & { creator: Creator; campaign: Campaign } } })[]> {
-    let query = db
+    const conditions = [];
+
+    if (filters?.brandId) {
+      conditions.push(eq(brands.id, filters.brandId));
+    }
+    if (filters?.creatorId) {
+      conditions.push(eq(creators.id, filters.creatorId));
+    }
+    if (filters?.status) {
+      conditions.push(eq(payments.status, filters.status as any));
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const results = await db
       .select()
       .from(payments)
       .leftJoin(contracts, eq(payments.contractId, contracts.id))
       .leftJoin(offers, eq(contracts.offerId, offers.id))
       .leftJoin(creators, eq(offers.creatorId, creators.id))
       .leftJoin(campaigns, eq(offers.campaignId, campaigns.id))
-      .leftJoin(brands, eq(campaigns.brandId, brands.id));
-
-    if (filters?.brandId) {
-      query = query.where(eq(brands.id, filters.brandId));
-    }
-    if (filters?.creatorId) {
-      query = query.where(eq(creators.id, filters.creatorId));
-    }
-    if (filters?.status) {
-      query = query.where(eq(payments.status, filters.status));
-    }
-
-    const results = await query.orderBy(desc(payments.createdAt));
+      .leftJoin(brands, eq(campaigns.brandId, brands.id))
+      .where(whereClause)
+      .orderBy(desc(payments.createdAt));
     
     return results.map(result => ({
       ...result.payments,
