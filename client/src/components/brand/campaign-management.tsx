@@ -13,6 +13,8 @@ import { Plus, Megaphone } from "lucide-react";
 
 export function CampaignManagement() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [selectedCampaign, setSelectedCampaign] = useState<any>(null);
+  const [isManageOpen, setIsManageOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -199,7 +201,14 @@ export function CampaignManagement() {
                   <span className="font-medium">{campaign.objective}</span>
                 </div>
               </div>
-              <Button variant="outline" className="w-full">
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => {
+                  setSelectedCampaign(campaign);
+                  setIsManageOpen(true);
+                }}
+              >
                 <Megaphone className="h-4 w-4 mr-2" />
                 Manage Campaign
               </Button>
