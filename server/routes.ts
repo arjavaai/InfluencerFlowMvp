@@ -49,6 +49,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const updatedUser = await storage.updateUserRole(userId, role);
+      
+      // Create corresponding profile
+      if (role === 'brand') {
+        const existingBrand = await storage.getBrandByUserId(userId);
+        if (!existingBrand) {
+          await storage.createBrand({
+            userId: userId,
+            companyName: updatedUser.firstName || 'My Company',
+            industry: 'Technology',
+            website: '',
+            description: 'A growing company looking for influencer partnerships',
+            isVerified: false,
+          });
+        }
+      } else if (role === 'creator') {
+        const existingCreator = await storage.getCreatorByUserId(userId);
+        if (!existingCreator) {
+          await storage.createCreator({
+            userId: userId,
+            username: updatedUser.firstName || 'creator',
+            displayName: `${updatedUser.firstName || 'Creator'} ${updatedUser.lastName || ''}`.trim(),
+            bio: 'Content creator passionate about engaging with audiences',
+            niche: 'Lifestyle',
+            platform: 'Instagram',
+            followersCount: 10000,
+            engagementRate: 3.5,
+            location: 'United States',
+            isActive: true,
+            isVerified: false,
+          });
+        }
+      }
+      
       res.json(updatedUser);
     } catch (error) {
       console.error("Error updating user role:", error);
