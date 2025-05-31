@@ -130,7 +130,7 @@ export function CreatorSearch() {
                   <SelectValue placeholder="All Niches" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Niches</SelectItem>
+                  <SelectItem value="all">All Niches</SelectItem>
                   <SelectItem value="Lifestyle">Lifestyle</SelectItem>
                   <SelectItem value="Fashion">Fashion</SelectItem>
                   <SelectItem value="Tech">Tech</SelectItem>
@@ -146,7 +146,7 @@ export function CreatorSearch() {
                   <SelectValue placeholder="Any Size" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Any Size</SelectItem>
+                  <SelectItem value="all">Any Size</SelectItem>
                   <SelectItem value="1K-10K">1K - 10K</SelectItem>
                   <SelectItem value="10K-100K">10K - 100K</SelectItem>
                   <SelectItem value="100K-1M">100K - 1M</SelectItem>
@@ -161,7 +161,7 @@ export function CreatorSearch() {
                   <SelectValue placeholder="Any Rate" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Any Rate</SelectItem>
+                  <SelectItem value="all">Any Rate</SelectItem>
                   <SelectItem value="1-3%">1-3%</SelectItem>
                   <SelectItem value="3-6%">3-6%</SelectItem>
                   <SelectItem value="6%+">6%+</SelectItem>
@@ -175,7 +175,7 @@ export function CreatorSearch() {
                   <SelectValue placeholder="All Locations" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Locations</SelectItem>
+                  <SelectItem value="all">All Locations</SelectItem>
                   <SelectItem value="United States">United States</SelectItem>
                   <SelectItem value="Canada">Canada</SelectItem>
                   <SelectItem value="Europe">Europe</SelectItem>

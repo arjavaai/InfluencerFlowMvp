@@ -60,7 +60,7 @@ export function CampaignManagement() {
 
     createCampaignMutation.mutate({
       ...formData,
-      budget: parseFloat(formData.budget),
+      budget: formData.budget,
     });
   };
 
