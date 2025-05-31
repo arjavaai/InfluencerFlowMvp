@@ -25,7 +25,7 @@ function Router() {
     <Switch>
       {!isAuthenticated ? (
         <Route path="/" component={Landing} />
-      ) : !user?.role ? (
+      ) : !user?.role || user?.role === null ? (
         <Route path="/" component={RoleSelection} />
       ) : (
         <>
