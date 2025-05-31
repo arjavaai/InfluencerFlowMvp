@@ -1,11 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Building, Star, Users, TrendingUp } from "lucide-react";
+import { Link } from "wouter";
 
 export default function Landing() {
-  const handleLogin = () => {
-    window.location.href = "/api/login";
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -20,11 +18,11 @@ export default function Landing() {
             from creator discovery to payment and reporting
           </p>
           <Button 
-            onClick={handleLogin}
             size="lg"
             className="bg-primary hover:bg-blue-700 text-white px-8 py-3 text-lg"
+            asChild
           >
-            Get Started
+            <Link href="/auth">Get Started</Link>
           </Button>
         </div>
 
