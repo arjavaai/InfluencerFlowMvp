@@ -25,7 +25,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       if (!user) {
@@ -49,7 +49,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/user/role', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { role } = req.body;
       
       if (!role || !['brand', 'creator'].includes(role)) {
@@ -129,7 +129,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Campaign routes
   app.get('/api/campaigns', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const brand = await storage.getBrandByUserId(userId);
       
       if (!brand) {
@@ -146,7 +146,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/campaigns', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const brand = await storage.getBrandByUserId(userId);
       
       if (!brand) {
@@ -169,7 +169,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Offer routes
   app.get('/api/offers', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       if (!user) {
@@ -204,7 +204,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/offers', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const brand = await storage.getBrandByUserId(userId);
       
       if (!brand) {
@@ -236,7 +236,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Contract routes
   app.get('/api/contracts', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       if (!user) {
@@ -290,7 +290,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch('/api/contracts/:id/sign', isAuthenticated, async (req: any, res) => {
     try {
       const contractId = parseInt(req.params.id);
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       if (!user) {
@@ -319,7 +319,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Payment routes
   app.get('/api/payments', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       if (!user) {
@@ -355,7 +355,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch('/api/payments/:id/mark-paid', isAuthenticated, async (req: any, res) => {
     try {
       const paymentId = parseInt(req.params.id);
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const brand = await storage.getBrandByUserId(userId);
       
       if (!brand) {
