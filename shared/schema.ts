@@ -25,10 +25,11 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// User storage table for Replit Auth
+// User storage table for email/password authentication
 export const users = pgTable("users", {
-  id: varchar("id").primaryKey().notNull(),
-  email: varchar("email").unique(),
+  id: serial("id").primaryKey(),
+  email: varchar("email").notNull().unique(),
+  password: varchar("password").notNull(),
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
@@ -40,7 +41,7 @@ export const users = pgTable("users", {
 // Creators table with profile information
 export const creators = pgTable("creators", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").references(() => users.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
   username: varchar("username").notNull().unique(),
   displayName: varchar("display_name").notNull(),
   bio: text("bio"),
@@ -58,7 +59,7 @@ export const creators = pgTable("creators", {
 // Brands table
 export const brands = pgTable("brands", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").references(() => users.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
   companyName: varchar("company_name").notNull(),
   industry: varchar("industry"),
   description: text("description"),
