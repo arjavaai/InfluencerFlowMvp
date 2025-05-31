@@ -1,15 +1,46 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import { File } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 export function OffersManagement() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
   const { data: offers, isLoading } = useQuery({
     queryKey: ["/api/offers"],
+  });
+
+  const generateContractMutation = useMutation({
+    mutationFn: async (offerId: number) => {
+      const offer = offers?.find((o: any) => o.id === offerId);
+      return await apiRequest(`/api/contracts`, "POST", {
+        offerId,
+        finalAmount: offer?.amount,
+        terms: "Standard influencer partnership terms and conditions apply."
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Contract generated successfully!",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/offers"] });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to generate contract. Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   const getStatusColor = (status: string) => {
@@ -108,9 +139,14 @@ export function OffersManagement() {
                     </TableCell>
                     <TableCell>
                       {offer.status === "accepted" ? (
-                        <Button size="sm" variant="outline">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => generateContractMutation.mutate(offer.id)}
+                          disabled={generateContractMutation.isPending}
+                        >
                           <File className="h-4 w-4 mr-2" />
-                          Generate Contract
+                          {generateContractMutation.isPending ? "Generating..." : "Generate Contract"}
                         </Button>
                       ) : offer.status === "countered" ? (
                         <div className="flex space-x-2">
