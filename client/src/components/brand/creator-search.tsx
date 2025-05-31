@@ -99,7 +99,7 @@ export function CreatorSearch() {
     sendOffersMutation.mutate({
       creatorIds: selectedCreators,
       campaignId: activeCampaign.id,
-      amount: 500, // Default offer amount
+      amount: "500", // Default offer amount as string
       message: "We'd love to collaborate with you on our latest campaign!",
     });
   };
