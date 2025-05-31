@@ -8,6 +8,7 @@ import Landing from "@/pages/landing";
 import BrandDashboard from "@/pages/brand-dashboard";
 import CreatorDashboard from "@/pages/creator-dashboard";
 import NotFound from "@/pages/not-found";
+import { RoleSelection } from "@/components/role-selection";
 
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -24,9 +25,11 @@ function Router() {
     <Switch>
       {!isAuthenticated ? (
         <Route path="/" component={Landing} />
+      ) : !user?.role ? (
+        <Route path="/" component={RoleSelection} />
       ) : (
         <>
-          {user?.role === 'brand' ? (
+          {user.role === 'brand' ? (
             <Route path="/" component={BrandDashboard} />
           ) : (
             <Route path="/" component={CreatorDashboard} />
