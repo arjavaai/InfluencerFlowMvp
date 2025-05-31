@@ -43,7 +43,7 @@ export default function BrandDashboard() {
       case "reports":
         return <ReportsDashboard />;
       default:
-        return <CampaignManagement />;
+        return <CampaignManagement onSectionChange={setActiveSection} />;
     }
   };
 

@@ -11,7 +11,11 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Plus, Megaphone } from "lucide-react";
 
-export function CampaignManagement() {
+interface CampaignManagementProps {
+  onSectionChange?: (section: string) => void;
+}
+
+export function CampaignManagement({ onSectionChange }: CampaignManagementProps = {}) {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedCampaign, setSelectedCampaign] = useState<any>(null);
   const [isManageOpen, setIsManageOpen] = useState(false);
@@ -244,17 +248,37 @@ export function CampaignManagement() {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Button className="h-auto p-4 flex flex-col items-center space-y-2">
+                    <Button 
+                      className="h-auto p-4 flex flex-col items-center space-y-2"
+                      onClick={() => {
+                        setIsManageOpen(false);
+                        onSectionChange?.("creators");
+                      }}
+                    >
                       <Plus className="h-6 w-6" />
                       <span>Find Creators</span>
                       <span className="text-xs text-gray-600">Browse and send offers</span>
                     </Button>
-                    <Button variant="outline" className="h-auto p-4 flex flex-col items-center space-y-2">
+                    <Button 
+                      variant="outline" 
+                      className="h-auto p-4 flex flex-col items-center space-y-2"
+                      onClick={() => {
+                        setIsManageOpen(false);
+                        onSectionChange?.("offers");
+                      }}
+                    >
                       <Megaphone className="h-6 w-6" />
                       <span>View Offers</span>
                       <span className="text-xs text-gray-600">Manage sent offers</span>
                     </Button>
-                    <Button variant="outline" className="h-auto p-4 flex flex-col items-center space-y-2">
+                    <Button 
+                      variant="outline" 
+                      className="h-auto p-4 flex flex-col items-center space-y-2"
+                      onClick={() => {
+                        setIsManageOpen(false);
+                        onSectionChange?.("reports");
+                      }}
+                    >
                       <Megaphone className="h-6 w-6" />
                       <span>Campaign Analytics</span>
                       <span className="text-xs text-gray-600">View performance</span>
