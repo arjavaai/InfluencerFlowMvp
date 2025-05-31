@@ -1,13 +1,18 @@
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Eye, FileSignature, Download, CheckCircle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 export function ContractsManagement() {
+  const [selectedContract, setSelectedContract] = useState<any>(null);
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
+  
   const { data: contracts, isLoading } = useQuery({
     queryKey: ["/api/contracts"],
   });
@@ -119,7 +124,14 @@ export function ContractsManagement() {
                 </div>
 
                 <div className="flex space-x-3">
-                  <Button variant="outline" className="flex-1">
+                  <Button 
+                    variant="outline" 
+                    className="flex-1"
+                    onClick={() => {
+                      setSelectedContract(contract);
+                      setIsReviewOpen(true);
+                    }}
+                  >
                     <Eye className="h-4 w-4 mr-2" />
                     {isFullyExecuted ? "Preview" : "Review"}
                   </Button>
@@ -149,6 +161,92 @@ export function ContractsManagement() {
           );
         })}
       </div>
+
+      {/* Contract Review Dialog */}
+      <Dialog open={isReviewOpen} onOpenChange={setIsReviewOpen}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Contract Details</DialogTitle>
+          </DialogHeader>
+          {selectedContract && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Creator</label>
+                  <p className="text-gray-900">{selectedContract.offer.creator.displayName}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Campaign</label>
+                  <p className="text-gray-900">{selectedContract.offer.campaign.name}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Contract Value</label>
+                  <p className="text-gray-900 font-semibold">${selectedContract.finalAmount}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Created</label>
+                  <p className="text-gray-900">{formatDistanceToNow(new Date(selectedContract.createdAt), { addSuffix: true })}</p>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Terms & Conditions</label>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-sm text-gray-700">{selectedContract.terms}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Creator Signature</label>
+                  <div className="flex items-center">
+                    {selectedContract.creatorSigned ? (
+                      <div className="flex items-center text-green-600">
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        <span className="text-sm">Signed {formatDistanceToNow(new Date(selectedContract.creatorSignedAt), { addSuffix: true })}</span>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-gray-500">Pending signature</span>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Brand Signature</label>
+                  <div className="flex items-center">
+                    {selectedContract.brandSigned ? (
+                      <div className="flex items-center text-green-600">
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        <span className="text-sm">Signed {formatDistanceToNow(new Date(selectedContract.brandSignedAt), { addSuffix: true })}</span>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-gray-500">Pending signature</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3">
+                <Button variant="outline" onClick={() => setIsReviewOpen(false)}>
+                  Close
+                </Button>
+                {!selectedContract.brandSigned && selectedContract.creatorSigned && (
+                  <Button 
+                    onClick={() => {
+                      signContractMutation.mutate(selectedContract.id);
+                      setIsReviewOpen(false);
+                    }}
+                    disabled={signContractMutation.isPending}
+                    className="bg-primary hover:bg-blue-700 text-white"
+                  >
+                    <FileSignature className="h-4 w-4 mr-2" />
+                    {signContractMutation.isPending ? "Signing..." : "Sign Contract"}
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
