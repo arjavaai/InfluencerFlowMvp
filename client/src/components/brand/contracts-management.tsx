@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Eye, FileSignature, Download, CheckCircle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import jsPDF from 'jspdf';
 
 export function ContractsManagement() {
   const [selectedContract, setSelectedContract] = useState<any>(null);
@@ -53,45 +54,81 @@ export function ContractsManagement() {
   };
 
   const handleDownloadPDF = (contract: any) => {
-    // Generate contract PDF content
-    const contractContent = `
-INFLUENCER MARKETING CONTRACT
-
-Contract ID: ${contract.id}
-Date: ${new Date(contract.createdAt).toLocaleDateString()}
-
-PARTIES:
-Brand: ${contract.offer.campaign.brand.companyName}
-Creator: ${contract.offer.creator.displayName} (@${contract.offer.creator.username})
-
-CAMPAIGN DETAILS:
-Campaign: ${contract.offer.campaign.name}
-Contract Value: $${contract.finalAmount}
-
-TERMS AND CONDITIONS:
-${contract.terms}
-
-SIGNATURES:
-${contract.creatorSigned ? `✓ Creator signed on ${new Date(contract.creatorSignedAt).toLocaleDateString()}` : '☐ Creator signature pending'}
-${contract.brandSigned ? `✓ Brand signed on ${new Date(contract.brandSignedAt).toLocaleDateString()}` : '☐ Brand signature pending'}
-
-This contract is ${contract.brandSigned && contract.creatorSigned ? 'FULLY EXECUTED' : 'PENDING SIGNATURES'}.
-    `;
-
-    // Create and download the PDF as a text file (in a real app, you'd use a PDF library)
-    const blob = new Blob([contractContent], { type: 'text/plain' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `contract-${contract.id}.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
+    const doc = new jsPDF();
+    
+    // Set up the document
+    doc.setFontSize(20);
+    doc.text('INFLUENCER MARKETING CONTRACT', 20, 30);
+    
+    doc.setFontSize(12);
+    let yPosition = 50;
+    
+    // Contract details
+    doc.text(`Contract ID: ${contract.id}`, 20, yPosition);
+    yPosition += 10;
+    doc.text(`Date: ${new Date(contract.createdAt).toLocaleDateString()}`, 20, yPosition);
+    yPosition += 20;
+    
+    // Parties section
+    doc.setFontSize(14);
+    doc.text('PARTIES:', 20, yPosition);
+    yPosition += 15;
+    doc.setFontSize(12);
+    doc.text(`Brand: ${contract.offer.campaign.brand.companyName}`, 20, yPosition);
+    yPosition += 10;
+    doc.text(`Creator: ${contract.offer.creator.displayName} (@${contract.offer.creator.username})`, 20, yPosition);
+    yPosition += 20;
+    
+    // Campaign details
+    doc.setFontSize(14);
+    doc.text('CAMPAIGN DETAILS:', 20, yPosition);
+    yPosition += 15;
+    doc.setFontSize(12);
+    doc.text(`Campaign: ${contract.offer.campaign.name}`, 20, yPosition);
+    yPosition += 10;
+    doc.text(`Contract Value: $${contract.finalAmount}`, 20, yPosition);
+    yPosition += 20;
+    
+    // Terms section
+    doc.setFontSize(14);
+    doc.text('TERMS AND CONDITIONS:', 20, yPosition);
+    yPosition += 15;
+    doc.setFontSize(12);
+    
+    // Split terms text if it's too long
+    const splitTerms = doc.splitTextToSize(contract.terms, 170);
+    doc.text(splitTerms, 20, yPosition);
+    yPosition += splitTerms.length * 5 + 15;
+    
+    // Signatures section
+    doc.setFontSize(14);
+    doc.text('SIGNATURES:', 20, yPosition);
+    yPosition += 15;
+    doc.setFontSize(12);
+    
+    const creatorSignature = contract.creatorSigned 
+      ? `✓ Creator signed on ${new Date(contract.creatorSignedAt).toLocaleDateString()}`
+      : '☐ Creator signature pending';
+    doc.text(creatorSignature, 20, yPosition);
+    yPosition += 10;
+    
+    const brandSignature = contract.brandSigned 
+      ? `✓ Brand signed on ${new Date(contract.brandSignedAt).toLocaleDateString()}`
+      : '☐ Brand signature pending';
+    doc.text(brandSignature, 20, yPosition);
+    yPosition += 15;
+    
+    // Contract status
+    const status = contract.brandSigned && contract.creatorSigned ? 'FULLY EXECUTED' : 'PENDING SIGNATURES';
+    doc.setFontSize(14);
+    doc.text(`This contract is ${status}.`, 20, yPosition);
+    
+    // Download the PDF
+    doc.save(`contract-${contract.id}.pdf`);
 
     toast({
       title: "Contract Downloaded",
-      description: "Contract has been downloaded successfully.",
+      description: "PDF contract has been downloaded successfully.",
     });
   };
 
