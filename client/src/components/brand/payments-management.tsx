@@ -107,7 +107,7 @@ function StripePaymentForm({ paymentId, amount, onSuccess }: { paymentId: number
       <div className="space-y-4 border p-4 rounded-lg">
         <h4 className="font-medium text-gray-900">Billing Information</h4>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <div>
             <Label htmlFor="name">Full Name *</Label>
             <Input
@@ -159,7 +159,7 @@ function StripePaymentForm({ paymentId, amount, onSuccess }: { paymentId: number
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <div>
             <Label htmlFor="city">City *</Label>
             <Input
@@ -374,7 +374,7 @@ export function PaymentsManagement() {
                                   {createPaymentIntentMutation.isPending ? "Setting up..." : "Pay with Stripe"}
                                 </Button>
                               </DialogTrigger>
-                              <DialogContent className="sm:max-w-md">
+                              <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
                                 <DialogHeader>
                                   <DialogTitle>Process Payment</DialogTitle>
                                 </DialogHeader>
