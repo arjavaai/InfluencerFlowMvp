@@ -8,17 +8,18 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       {/* Navigation */}
-      <nav className="relative z-50 px-6 py-4">
+      <nav className="relative z-50 px-4 sm:px-6 py-4">
         <div className="container mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-gradient-to-r from-purple-400 to-pink-400 rounded-lg flex items-center justify-center">
               <Zap className="h-5 w-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-white">InfluencerFlow AI</span>
+            <span className="text-lg sm:text-xl font-bold text-white">InfluencerFlow AI</span>
           </div>
           <Button 
             variant="outline" 
-            className="border-purple-400/50 hover:bg-purple-400/20 hover:text-white hover:border-purple-300 transition-all duration-300 bg-[#e8499f] text-[#ffffff]"
+            size="sm"
+            className="border-purple-400/50 hover:bg-purple-400/20 hover:text-white hover:border-purple-300 transition-all duration-300 bg-[#e8499f] text-[#ffffff] text-sm px-3 py-2 sm:px-4 sm:py-2"
             asChild
           >
             <Link href="/auth">Sign In</Link>
@@ -26,35 +27,35 @@ export default function Landing() {
         </div>
       </nav>
 
-      <div className="container mx-auto px-6 py-16">
+      <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-16">
         {/* Hero Section */}
-        <div className="text-center mb-20 relative">
+        <div className="text-center mb-12 sm:mb-20 relative">
           <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-pink-600/20 blur-3xl -z-10"></div>
-          <h1 className="text-6xl md:text-7xl font-bold text-white mb-6 leading-tight">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-4 sm:mb-6 leading-tight px-2">
             Transform Your
             <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent block">
               Influencer Marketing
             </span>
           </h1>
-          <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-lg sm:text-xl text-gray-300 mb-6 sm:mb-8 max-w-3xl mx-auto leading-relaxed px-4">
             The complete AI-powered platform for managing influencer campaigns from discovery to performance tracking. 
             Streamline collaborations, automate contracts, and maximize ROI.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center px-4">
             <Button 
               size="lg"
-              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-8 py-4 text-lg rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg rounded-full shadow-lg hover:shadow-xl transition-all duration-300 w-full sm:w-auto"
               asChild
             >
               <Link href="/auth">
                 Start Free Trial
-                <ArrowRight className="ml-2 h-5 w-5" />
+                <ArrowRight className="ml-2 h-4 sm:h-5 w-4 sm:w-5" />
               </Link>
             </Button>
             <Button 
               variant="outline" 
               size="lg"
-              className="border-purple-300 hover:bg-purple-300 hover:text-purple-900 px-8 py-4 text-lg rounded-full bg-[#251946] text-[#f4ffff]"
+              className="border-purple-300 hover:bg-purple-300 hover:text-purple-900 px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg rounded-full bg-[#251946] text-[#f4ffff] w-full sm:w-auto"
             >
               Watch Demo
             </Button>
