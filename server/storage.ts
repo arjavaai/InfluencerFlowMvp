@@ -176,7 +176,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Offer operations
-  async getOffers(filters?: { campaignId?: number; creatorId?: number; status?: string }): Promise<(Offer & { creator: Creator; campaign: Campaign & { brand: Brand } })[]> {
+  async getOffers(filters?: { campaignId?: number; creatorId?: number; status?: string; brandId?: number }): Promise<(Offer & { creator: Creator; campaign: Campaign & { brand: Brand } })[]> {
     const results = await db
       .select()
       .from(offers)
@@ -184,6 +184,7 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(campaigns, eq(offers.campaignId, campaigns.id))
       .leftJoin(brands, eq(campaigns.brandId, brands.id))
       .where(
+        filters?.brandId ? eq(campaigns.brandId, filters.brandId) :
         filters?.campaignId ? eq(offers.campaignId, filters.campaignId) :
         filters?.creatorId ? eq(offers.creatorId, filters.creatorId) :
         filters?.status ? eq(offers.status, filters.status) : 

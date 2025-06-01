@@ -208,8 +208,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       } else if (user.role === 'brand') {
         const brand = await storage.getBrandByUserId(userId);
-        if (brand && req.query.campaignId) {
-          filters.campaignId = parseInt(req.query.campaignId as string);
+        if (brand) {
+          filters.brandId = brand.id;
         }
       }
 
