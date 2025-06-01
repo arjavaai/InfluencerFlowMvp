@@ -1,13 +1,19 @@
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Eye, FileSignature, Download, CheckCircle, Clock, FileText } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import jsPDF from 'jspdf';
 
 export function CreatorContracts() {
+  const [selectedContract, setSelectedContract] = useState<any>(null);
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
+  
   const { data: contracts, isLoading } = useQuery({
     queryKey: ["/api/contracts"],
   });
@@ -34,6 +40,85 @@ export function CreatorContracts() {
       });
     },
   });
+
+  const handleDownloadPDF = (contract: any) => {
+    const doc = new jsPDF();
+    
+    // Set up the document
+    doc.setFontSize(20);
+    doc.text('INFLUENCER MARKETING CONTRACT', 20, 30);
+    
+    doc.setFontSize(12);
+    let yPosition = 50;
+    
+    // Contract details
+    doc.text(`Contract ID: ${contract.id}`, 20, yPosition);
+    yPosition += 10;
+    doc.text(`Date: ${new Date(contract.createdAt).toLocaleDateString()}`, 20, yPosition);
+    yPosition += 20;
+    
+    // Parties section
+    doc.setFontSize(14);
+    doc.text('PARTIES:', 20, yPosition);
+    yPosition += 15;
+    doc.setFontSize(12);
+    doc.text(`Brand: ${contract.offer.campaign.brand.companyName}`, 20, yPosition);
+    yPosition += 10;
+    doc.text(`Creator: ${contract.offer.creator.displayName} (@${contract.offer.creator.username})`, 20, yPosition);
+    yPosition += 20;
+    
+    // Campaign details
+    doc.setFontSize(14);
+    doc.text('CAMPAIGN DETAILS:', 20, yPosition);
+    yPosition += 15;
+    doc.setFontSize(12);
+    doc.text(`Campaign: ${contract.offer.campaign.name}`, 20, yPosition);
+    yPosition += 10;
+    doc.text(`Contract Value: $${contract.finalAmount}`, 20, yPosition);
+    yPosition += 20;
+    
+    // Terms section
+    doc.setFontSize(14);
+    doc.text('TERMS AND CONDITIONS:', 20, yPosition);
+    yPosition += 15;
+    doc.setFontSize(12);
+    
+    // Split terms text if it's too long
+    const splitTerms = doc.splitTextToSize(contract.terms, 170);
+    doc.text(splitTerms, 20, yPosition);
+    yPosition += splitTerms.length * 5 + 15;
+    
+    // Signatures section
+    doc.setFontSize(14);
+    doc.text('SIGNATURES:', 20, yPosition);
+    yPosition += 15;
+    doc.setFontSize(12);
+    
+    const creatorSignature = contract.creatorSigned 
+      ? `✓ Creator signed on ${new Date(contract.creatorSignedAt).toLocaleDateString()}`
+      : '☐ Creator signature pending';
+    doc.text(creatorSignature, 20, yPosition);
+    yPosition += 10;
+    
+    const brandSignature = contract.brandSigned 
+      ? `✓ Brand signed on ${new Date(contract.brandSignedAt).toLocaleDateString()}`
+      : '☐ Brand signature pending';
+    doc.text(brandSignature, 20, yPosition);
+    yPosition += 15;
+    
+    // Contract status
+    const status = contract.brandSigned && contract.creatorSigned ? 'FULLY EXECUTED' : 'PENDING SIGNATURES';
+    doc.setFontSize(14);
+    doc.text(`This contract is ${status}.`, 20, yPosition);
+    
+    // Download the PDF
+    doc.save(`contract-${contract.id}.pdf`);
+
+    toast({
+      title: "Contract Downloaded",
+      description: "PDF contract has been downloaded successfully.",
+    });
+  };
 
   const getContractStatus = (contract: any) => {
     if (contract.brandSigned && contract.creatorSigned) {
@@ -183,13 +268,24 @@ export function CreatorContracts() {
                 </div>
 
                 <div className="flex space-x-3">
-                  <Button variant="outline" className="flex-1">
+                  <Button 
+                    variant="outline" 
+                    className="flex-1"
+                    onClick={() => {
+                      setSelectedContract(contract);
+                      setIsReviewOpen(true);
+                    }}
+                  >
                     <Eye className="h-4 w-4 mr-2" />
                     Review Contract
                   </Button>
                   
                   {isFullyExecuted ? (
-                    <Button variant="outline" className="flex-1">
+                    <Button 
+                      variant="outline" 
+                      className="flex-1"
+                      onClick={() => handleDownloadPDF(contract)}
+                    >
                       <Download className="h-4 w-4 mr-2" />
                       Download PDF
                     </Button>
@@ -225,6 +321,92 @@ export function CreatorContracts() {
           );
         })}
       </div>
+
+      {/* Contract Review Dialog */}
+      <Dialog open={isReviewOpen} onOpenChange={setIsReviewOpen}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Contract Details</DialogTitle>
+          </DialogHeader>
+          {selectedContract && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Brand</label>
+                  <p className="text-gray-900">{selectedContract.offer.campaign.brand.companyName}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Campaign</label>
+                  <p className="text-gray-900">{selectedContract.offer.campaign.name}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Contract Value</label>
+                  <p className="text-gray-900 font-semibold">${selectedContract.finalAmount}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Created</label>
+                  <p className="text-gray-900">{formatDistanceToNow(new Date(selectedContract.createdAt), { addSuffix: true })}</p>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Terms & Conditions</label>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-sm text-gray-700">{selectedContract.terms}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Creator Signature</label>
+                  <div className="flex items-center">
+                    {selectedContract.creatorSigned ? (
+                      <div className="flex items-center text-green-600">
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        <span className="text-sm">Signed {formatDistanceToNow(new Date(selectedContract.creatorSignedAt), { addSuffix: true })}</span>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-gray-500">Pending signature</span>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Brand Signature</label>
+                  <div className="flex items-center">
+                    {selectedContract.brandSigned ? (
+                      <div className="flex items-center text-green-600">
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        <span className="text-sm">Signed {formatDistanceToNow(new Date(selectedContract.brandSignedAt), { addSuffix: true })}</span>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-gray-500">Pending signature</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3">
+                <Button variant="outline" onClick={() => setIsReviewOpen(false)}>
+                  Close
+                </Button>
+                {!selectedContract.creatorSigned && (
+                  <Button 
+                    onClick={() => {
+                      signContractMutation.mutate(selectedContract.id);
+                      setIsReviewOpen(false);
+                    }}
+                    disabled={signContractMutation.isPending}
+                    className="bg-primary hover:bg-blue-700 text-white"
+                  >
+                    <FileSignature className="h-4 w-4 mr-2" />
+                    {signContractMutation.isPending ? "Signing..." : "Sign Contract"}
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
