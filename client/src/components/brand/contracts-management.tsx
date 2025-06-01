@@ -52,6 +52,49 @@ export function ContractsManagement() {
     }
   };
 
+  const handleDownloadPDF = (contract: any) => {
+    // Generate contract PDF content
+    const contractContent = `
+INFLUENCER MARKETING CONTRACT
+
+Contract ID: ${contract.id}
+Date: ${new Date(contract.createdAt).toLocaleDateString()}
+
+PARTIES:
+Brand: ${contract.offer.campaign.brand.companyName}
+Creator: ${contract.offer.creator.displayName} (@${contract.offer.creator.username})
+
+CAMPAIGN DETAILS:
+Campaign: ${contract.offer.campaign.name}
+Contract Value: $${contract.finalAmount}
+
+TERMS AND CONDITIONS:
+${contract.terms}
+
+SIGNATURES:
+${contract.creatorSigned ? `✓ Creator signed on ${new Date(contract.creatorSignedAt).toLocaleDateString()}` : '☐ Creator signature pending'}
+${contract.brandSigned ? `✓ Brand signed on ${new Date(contract.brandSignedAt).toLocaleDateString()}` : '☐ Brand signature pending'}
+
+This contract is ${contract.brandSigned && contract.creatorSigned ? 'FULLY EXECUTED' : 'PENDING SIGNATURES'}.
+    `;
+
+    // Create and download the PDF as a text file (in a real app, you'd use a PDF library)
+    const blob = new Blob([contractContent], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `contract-${contract.id}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
+    toast({
+      title: "Contract Downloaded",
+      description: "Contract has been downloaded successfully.",
+    });
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -136,7 +179,11 @@ export function ContractsManagement() {
                     {isFullyExecuted ? "Preview" : "Review"}
                   </Button>
                   {isFullyExecuted ? (
-                    <Button variant="outline" className="flex-1">
+                    <Button 
+                      variant="outline" 
+                      className="flex-1"
+                      onClick={() => handleDownloadPDF(contract)}
+                    >
                       <Download className="h-4 w-4 mr-2" />
                       Download PDF
                     </Button>
