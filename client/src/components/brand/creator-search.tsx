@@ -250,7 +250,7 @@ export function CreatorSearch() {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Rate:</span>
-                  <span className="font-medium">${creator.averageRate}/post</span>
+                  <span className="font-medium">₹{creator.averageRate}/post</span>
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
