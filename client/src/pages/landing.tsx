@@ -18,7 +18,7 @@ export default function Landing() {
           </div>
           <Button 
             variant="outline" 
-            className="border-purple-400/50 text-purple-200 hover:bg-purple-400/20 hover:text-white hover:border-purple-300 transition-all duration-300"
+            className="border-purple-400/50 hover:bg-purple-400/20 hover:text-white hover:border-purple-300 transition-all duration-300 bg-[#e8499f] text-[#ffffff]"
             asChild
           >
             <Link href="/auth">Sign In</Link>
