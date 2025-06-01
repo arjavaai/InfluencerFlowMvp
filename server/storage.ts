@@ -221,83 +221,30 @@ export class DatabaseStorage implements IStorage {
 
   // Contract operations
   async getContracts(filters?: { brandId?: number; creatorId?: number }): Promise<(Contract & { offer: Offer & { creator: Creator; campaign: Campaign & { brand: Brand } } })[]> {
-    let query = db
-      .select({
-        id: contracts.id,
-        offerId: contracts.offerId,
-        terms: contracts.terms,
-        signedByCreator: contracts.signedByCreator,
-        signedByBrand: contracts.signedByBrand,
-        status: contracts.status,
-        createdAt: contracts.createdAt,
-        offer: {
-          id: offers.id,
-          campaignId: offers.campaignId,
-          creatorId: offers.creatorId,
-          amount: offers.amount,
-          deliverables: offers.deliverables,
-          deadline: offers.deadline,
-          terms: offers.terms,
-          status: offers.status,
-          message: offers.message,
-          createdAt: offers.createdAt,
-          updatedAt: offers.updatedAt,
-          creator: {
-            id: creators.id,
-            userId: creators.userId,
-            username: creators.username,
-            displayName: creators.displayName,
-            bio: creators.bio,
-            niche: creators.niche,
-            followersCount: creators.followersCount,
-            engagementRate: creators.engagementRate,
-            averageRate: creators.averageRate,
-            location: creators.location,
-            profileImageUrl: creators.profileImageUrl,
-            tags: creators.tags,
-            isActive: creators.isActive,
-            createdAt: creators.createdAt,
-          },
-          campaign: {
-            id: campaigns.id,
-            brandId: campaigns.brandId,
-            title: campaigns.title,
-            description: campaigns.description,
-            budget: campaigns.budget,
-            targetAudience: campaigns.targetAudience,
-            deliverables: campaigns.deliverables,
-            timeline: campaigns.timeline,
-            status: campaigns.status,
-            createdAt: campaigns.createdAt,
-            updatedAt: campaigns.updatedAt,
-            brand: {
-              id: brands.id,
-              userId: brands.userId,
-              companyName: brands.companyName,
-              industry: brands.industry,
-              description: brands.description,
-              website: brands.website,
-              logoUrl: brands.logoUrl,
-              createdAt: brands.createdAt,
-            }
-          }
-        }
-      })
+    const results = await db
+      .select()
       .from(contracts)
       .leftJoin(offers, eq(contracts.offerId, offers.id))
       .leftJoin(creators, eq(offers.creatorId, creators.id))
       .leftJoin(campaigns, eq(offers.campaignId, campaigns.id))
-      .leftJoin(brands, eq(campaigns.brandId, brands.id));
+      .leftJoin(brands, eq(campaigns.brandId, brands.id))
+      .where(
+        filters?.brandId ? eq(campaigns.brandId, filters.brandId) :
+        filters?.creatorId ? eq(offers.creatorId, filters.creatorId) :
+        undefined
+      );
 
-    if (filters?.brandId) {
-      query = query.where(eq(campaigns.brandId, filters.brandId));
-    }
-    if (filters?.creatorId) {
-      query = query.where(eq(offers.creatorId, filters.creatorId));
-    }
-
-    const results = await query;
-    return results as any;
+    return results.map((row: any) => ({
+      ...row.contracts,
+      offer: {
+        ...row.offers,
+        creator: row.creators,
+        campaign: {
+          ...row.campaigns,
+          brand: row.brands
+        }
+      }
+    }));
   }
 
   async getContract(id: number): Promise<Contract | undefined> {

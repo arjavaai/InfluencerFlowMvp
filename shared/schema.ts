@@ -105,7 +105,6 @@ export const contracts = pgTable("contracts", {
   brandSigned: boolean("brand_signed").default(false),
   creatorSignedAt: timestamp("creator_signed_at"),
   brandSignedAt: timestamp("brand_signed_at"),
-  status: varchar("status", { enum: ["draft", "signed", "completed"] }).default("draft"),
   pdfUrl: varchar("pdf_url"),
   createdAt: timestamp("created_at").defaultNow(),
 });
