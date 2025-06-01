@@ -19,7 +19,8 @@ export function OffersManagement() {
 
   const generateContractMutation = useMutation({
     mutationFn: async (offerId: number) => {
-      const offer = offers?.find((o: any) => o.id === offerId);
+      const offersArray = Array.isArray(offers) ? offers : [];
+      const offer = offersArray.find((o: any) => o.id === offerId);
       return await apiRequest("POST", "/api/contracts", {
         offerId,
         finalAmount: offer?.amount,
@@ -43,6 +44,41 @@ export function OffersManagement() {
     },
   });
 
+  const updateOfferMutation = useMutation({
+    mutationFn: async ({ id, updates }: { id: number; updates: any }) => {
+      return await apiRequest("PATCH", `/api/offers/${id}`, updates);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Offer updated successfully!",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/offers"] });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update offer. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleAcceptCounterOffer = (offerId: number) => {
+    updateOfferMutation.mutate({ 
+      id: offerId, 
+      updates: { status: 'accepted' }
+    });
+  };
+
+  const handleNegotiateOffer = (offerId: number) => {
+    // This could open a negotiation dialog or redirect to a negotiation page
+    toast({
+      title: "Negotiation",
+      description: "Negotiation feature will be available soon.",
+    });
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "accepted":
@@ -56,6 +92,10 @@ export function OffersManagement() {
       default:
         return "bg-gray-100 text-gray-800";
     }
+  };
+
+  const handleGenerateContract = (offerId: number) => {
+    generateContractMutation.mutate(offerId);
   };
 
   if (isLoading) {
@@ -150,10 +190,18 @@ export function OffersManagement() {
                         </Button>
                       ) : offer.status === "countered" ? (
                         <div className="flex space-x-2">
-                          <Button size="sm" variant="outline">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleAcceptCounterOffer(offer.id)}
+                          >
                             Accept Counter
                           </Button>
-                          <Button size="sm" variant="outline">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleNegotiateOffer(offer.id)}
+                          >
                             Negotiate
                           </Button>
                         </div>
