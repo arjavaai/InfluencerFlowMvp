@@ -54,7 +54,7 @@ export default function Landing() {
             <Button 
               variant="outline" 
               size="lg"
-              className="border-purple-300 text-purple-300 hover:bg-purple-300 hover:text-purple-900 px-8 py-4 text-lg rounded-full"
+              className="border-purple-300 hover:bg-purple-300 hover:text-purple-900 px-8 py-4 text-lg rounded-full bg-[#251946] text-[#f4ffff]"
             >
               Watch Demo
             </Button>
