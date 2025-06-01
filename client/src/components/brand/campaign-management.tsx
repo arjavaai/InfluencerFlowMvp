@@ -319,7 +319,7 @@ export function CampaignManagement({ onSectionChange }: CampaignManagementProps 
               <div className="space-y-2 mb-4">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Budget:</span>
-                  <span className="font-medium">${campaign.budget}</span>
+                  <span className="font-medium">₹{campaign.budget}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Objective:</span>
