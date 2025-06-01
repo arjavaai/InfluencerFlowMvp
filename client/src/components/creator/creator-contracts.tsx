@@ -201,7 +201,7 @@ export function CreatorContracts() {
                       {contract.offer.campaign.name}
                     </h3>
                     <p className="text-sm text-gray-600">
-                      {contract.offer.campaign.brand.companyName} • ${parseFloat(contract.finalAmount).toLocaleString()}
+                      {contract.offer.campaign.brand.companyName} • ₹{parseFloat(contract.finalAmount).toLocaleString()}
                     </p>
                   </div>
                   <Badge className={status.color}>

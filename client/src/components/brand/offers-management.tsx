@@ -164,10 +164,10 @@ export function OffersManagement() {
                       {offer.campaign.name}
                     </TableCell>
                     <TableCell>
-                      <div className="font-medium">${offer.amount}</div>
+                      <div className="font-medium">₹{offer.amount}</div>
                       {offer.counterAmount && (
                         <div className="text-sm text-blue-600">
-                          Counter: ${offer.counterAmount}
+                          Counter: ₹{offer.counterAmount}
                         </div>
                       )}
                     </TableCell>

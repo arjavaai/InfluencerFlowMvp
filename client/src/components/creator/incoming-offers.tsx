@@ -202,7 +202,7 @@ export function IncomingOffers() {
                   <div>
                     <p className="text-sm font-medium text-gray-700 mb-2">Offer Amount</p>
                     <p className="text-2xl font-bold text-gray-900 mb-1">
-                      ${parseFloat(offer.amount).toLocaleString()}
+                      ₹{parseFloat(offer.amount).toLocaleString()}
                     </p>
                     <p className="text-sm text-gray-600">Per deliverable + usage rights</p>
                   </div>
@@ -257,7 +257,7 @@ export function IncomingOffers() {
                           {offer.campaign.name} - {offer.campaign.brand.companyName}
                         </h4>
                         <p className="text-sm text-gray-600">
-                          ${parseFloat(offer.amount).toLocaleString()} • {formatDistanceToNow(new Date(offer.createdAt), { addSuffix: true })}
+                          ₹{parseFloat(offer.amount).toLocaleString()} • {formatDistanceToNow(new Date(offer.createdAt), { addSuffix: true })}
                         </p>
                       </div>
                       <Badge className={getStatusColor(offer.status)}>
