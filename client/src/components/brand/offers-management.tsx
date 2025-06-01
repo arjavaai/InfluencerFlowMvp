@@ -24,7 +24,9 @@ export function OffersManagement() {
       return await apiRequest("POST", "/api/contracts", {
         offerId,
         finalAmount: offer?.amount,
-        terms: "Standard influencer partnership terms and conditions apply."
+        terms: "Standard influencer partnership terms and conditions apply.",
+        creatorSigned: false,
+        brandSigned: false
       });
     },
     onSuccess: () => {
