@@ -280,10 +280,26 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(contracts, eq(payments.contractId, contracts.id))
       .leftJoin(offers, eq(contracts.offerId, offers.id))
       .leftJoin(creators, eq(offers.creatorId, creators.id))
-      .leftJoin(campaigns, eq(offers.campaignId, campaigns.id));
+      .leftJoin(campaigns, eq(offers.campaignId, campaigns.id))
+      .where(
+        filters?.brandId ? eq(campaigns.brandId, filters.brandId) :
+        filters?.creatorId ? eq(offers.creatorId, filters.creatorId) :
+        filters?.status ? eq(payments.status, filters.status) :
+        undefined
+      );
 
     const results = await query;
-    return results as any;
+    return results.map((row: any) => ({
+      ...row.payments,
+      contract: {
+        ...row.contracts,
+        offer: {
+          ...row.offers,
+          creator: row.creators,
+          campaign: row.campaigns
+        }
+      }
+    }));
   }
 
   async getPayment(id: number): Promise<Payment | undefined> {
