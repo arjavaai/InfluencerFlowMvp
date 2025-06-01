@@ -75,7 +75,7 @@ export function CreatorEarnings() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">This Month</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  ${thisMonthEarnings.toLocaleString()}
+                  ₹{thisMonthEarnings.toLocaleString()}
                 </p>
               </div>
             </div>
@@ -91,7 +91,7 @@ export function CreatorEarnings() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Pending</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  ${pendingAmount.toLocaleString()}
+                  ₹{pendingAmount.toLocaleString()}
                 </p>
               </div>
             </div>
@@ -107,7 +107,7 @@ export function CreatorEarnings() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Total Earned</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  ${totalEarned.toLocaleString()}
+                  ₹{totalEarned.toLocaleString()}
                 </p>
               </div>
             </div>
@@ -156,7 +156,7 @@ export function CreatorEarnings() {
                         {payment.contract.offer.campaign.brand?.companyName || "Brand"}
                       </TableCell>
                       <TableCell className="font-medium">
-                        ${parseFloat(payment.amount).toLocaleString()}
+                        ₹{parseFloat(payment.amount).toLocaleString()}
                       </TableCell>
                       <TableCell>
                         <Badge className={getStatusColor(payment.status)}>
@@ -190,7 +190,7 @@ export function CreatorEarnings() {
               <div>
                 <h4 className="text-sm font-medium text-gray-700 mb-2">Average Payment</h4>
                 <p className="text-xl font-bold text-gray-900">
-                  ${Math.round(totalEarned / paidPayments.length).toLocaleString()}
+                  ₹{Math.round(totalEarned / paidPayments.length).toLocaleString()}
                 </p>
               </div>
               <div>

@@ -124,7 +124,7 @@ export default function Landing() {
             <div className="text-gray-400">Brands Served</div>
           </div>
           <div className="text-center">
-            <div className="text-4xl font-bold text-white mb-2">$2M+</div>
+            <div className="text-4xl font-bold text-white mb-2">₹16Cr+</div>
             <div className="text-gray-400">Payments Processed</div>
           </div>
           <div className="text-center">
