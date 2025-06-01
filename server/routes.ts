@@ -222,6 +222,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch('/api/offers/:id', isAuthenticated, async (req: any, res) => {
     try {
+      const id = parseInt(req.params.id);
+      const updatedOffer = await storage.updateOffer(id, req.body);
+      res.json(updatedOffer);
+    } catch (error) {
+      console.error("Error updating offer:", error);
+      res.status(500).json({ message: "Failed to update offer" });
+    }
+  });
+
+  app.patch('/api/offers/:id', isAuthenticated, async (req: any, res) => {
+    try {
       const offerId = parseInt(req.params.id);
       const updates = req.body;
 

@@ -138,7 +138,7 @@ export function OffersManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {offers?.map((offer: any) => (
+                {(offers as any[])?.map((offer: any) => (
                   <TableRow key={offer.id}>
                     <TableCell>
                       <div className="flex items-center space-x-3">
