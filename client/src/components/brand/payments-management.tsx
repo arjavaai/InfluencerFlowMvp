@@ -12,6 +12,8 @@ import { format } from "date-fns";
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
@@ -21,11 +23,34 @@ function StripePaymentForm({ paymentId, amount, onSuccess }: { paymentId: number
   const elements = useElements();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [billingDetails, setBillingDetails] = useState({
+    name: '',
+    email: '',
+    address: {
+      line1: '',
+      line2: '',
+      city: '',
+      state: '',
+      postal_code: '',
+      country: 'IN'
+    }
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!stripe || !elements) {
+      return;
+    }
+
+    // Validate required fields
+    if (!billingDetails.name || !billingDetails.email || !billingDetails.address.line1 || 
+        !billingDetails.address.city || !billingDetails.address.state || !billingDetails.address.postal_code) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required billing details.",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -36,6 +61,9 @@ function StripePaymentForm({ paymentId, amount, onSuccess }: { paymentId: number
         elements,
         confirmParams: {
           return_url: window.location.origin,
+          payment_method_data: {
+            billing_details: billingDetails
+          }
         },
         redirect: 'if_required',
       });
@@ -72,6 +100,107 @@ function StripePaymentForm({ paymentId, amount, onSuccess }: { paymentId: number
         <div className="flex justify-between items-center mb-4">
           <span className="text-sm text-gray-600">Payment Amount:</span>
           <span className="text-lg font-semibold">${amount}</span>
+        </div>
+      </div>
+
+      {/* Billing Details Form */}
+      <div className="space-y-4 border p-4 rounded-lg">
+        <h4 className="font-medium text-gray-900">Billing Information</h4>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="name">Full Name *</Label>
+            <Input
+              id="name"
+              value={billingDetails.name}
+              onChange={(e) => setBillingDetails(prev => ({ ...prev, name: e.target.value }))}
+              placeholder="Enter full name"
+              required
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="email">Email Address *</Label>
+            <Input
+              id="email"
+              type="email"
+              value={billingDetails.email}
+              onChange={(e) => setBillingDetails(prev => ({ ...prev, email: e.target.value }))}
+              placeholder="Enter email address"
+              required
+            />
+          </div>
+        </div>
+
+        <div>
+          <Label htmlFor="address1">Address Line 1 *</Label>
+          <Input
+            id="address1"
+            value={billingDetails.address.line1}
+            onChange={(e) => setBillingDetails(prev => ({ 
+              ...prev, 
+              address: { ...prev.address, line1: e.target.value }
+            }))}
+            placeholder="Street address"
+            required
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="address2">Address Line 2</Label>
+          <Input
+            id="address2"
+            value={billingDetails.address.line2}
+            onChange={(e) => setBillingDetails(prev => ({ 
+              ...prev, 
+              address: { ...prev.address, line2: e.target.value }
+            }))}
+            placeholder="Apartment, suite, etc. (optional)"
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <Label htmlFor="city">City *</Label>
+            <Input
+              id="city"
+              value={billingDetails.address.city}
+              onChange={(e) => setBillingDetails(prev => ({ 
+                ...prev, 
+                address: { ...prev.address, city: e.target.value }
+              }))}
+              placeholder="City"
+              required
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="state">State *</Label>
+            <Input
+              id="state"
+              value={billingDetails.address.state}
+              onChange={(e) => setBillingDetails(prev => ({ 
+                ...prev, 
+                address: { ...prev.address, state: e.target.value }
+              }))}
+              placeholder="State"
+              required
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="postal">Postal Code *</Label>
+            <Input
+              id="postal"
+              value={billingDetails.address.postal_code}
+              onChange={(e) => setBillingDetails(prev => ({ 
+                ...prev, 
+                address: { ...prev.address, postal_code: e.target.value }
+              }))}
+              placeholder="Postal code"
+              required
+            />
+          </div>
         </div>
       </div>
       
