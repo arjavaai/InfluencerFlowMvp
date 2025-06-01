@@ -22,6 +22,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
 
+  // Quick role setup route for troubleshooting
+  app.post('/api/setup-brand', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const updatedUser = await storage.updateUserRole(userId, 'brand');
+      
+      // Create brand profile
+      const existingBrand = await storage.getBrandByUserId(userId);
+      if (!existingBrand) {
+        await storage.createBrand({
+          userId: userId,
+          companyName: updatedUser.firstName || 'My Company',
+          industry: 'Technology',
+          website: '',
+          description: 'A growing company looking for influencer partnerships',
+        });
+      }
+      
+      res.json({ message: 'Brand role set successfully', user: updatedUser });
+    } catch (error) {
+      console.error("Error setting up brand:", error);
+      res.status(500).json({ message: "Failed to set up brand role" });
+    }
+  });
+
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
