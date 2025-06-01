@@ -466,6 +466,285 @@ export class DatabaseStorage implements IStorage {
 
     console.log("Demo data seeded successfully!");
   }
+
+  async addRealInfluencers(): Promise<void> {
+    // Add real influencers from CSV data
+    const influencerUsers = [
+      { email: "dimpi@sanghvi.com", firstName: "Dimpi", lastName: "Sanghvi", role: "creator" as const },
+      { email: "shashank@travel.com", firstName: "Shashank", lastName: "Sanghvi", role: "creator" as const },
+      { email: "shakir@mallu.com", firstName: "Shakir", lastName: "Subhan", role: "creator" as const },
+      { email: "shenaz@treasury.com", firstName: "Shenaz", lastName: "Treasurywala", role: "creator" as const },
+      { email: "brinda@sharma.com", firstName: "Brinda", lastName: "Sharma", role: "creator" as const },
+      { email: "pooja@dhingra.com", firstName: "Pooja", lastName: "Dhingra", role: "creator" as const },
+      { email: "shipra@khanna.com", firstName: "Shipra", lastName: "Khanna", role: "creator" as const },
+      { email: "vikas@khanna.com", firstName: "Vikas", lastName: "Khanna", role: "creator" as const },
+      { email: "ranveer@brar.com", firstName: "Ranveer", lastName: "Brar", role: "creator" as const },
+      { email: "kunal@kapur.com", firstName: "Kunal", lastName: "Kapur", role: "creator" as const },
+      { email: "shivesh@baking.com", firstName: "Shivesh", lastName: "Bhatia", role: "creator" as const },
+      { email: "neeraj@chopra.com", firstName: "Neeraj", lastName: "Chopra", role: "creator" as const },
+      { email: "gaurav@tech.com", firstName: "Gaurav", lastName: "Chaudhary", role: "creator" as const },
+      { email: "shlok@tech.com", firstName: "Shlok", lastName: "Srivastava", role: "creator" as const },
+      { email: "naman@tech.com", firstName: "Naman", lastName: "Deshmukh", role: "creator" as const },
+      { email: "dhruv@rathee.com", firstName: "Dhruv", lastName: "Rathee", role: "creator" as const },
+      { email: "alakh@physics.com", firstName: "Alakh", lastName: "Pandey", role: "creator" as const },
+      { email: "vivek@bindra.com", firstName: "Vivek", lastName: "Bindra", role: "creator" as const }
+    ];
+
+    const createdInfluencers = [];
+    for (const user of influencerUsers) {
+      const [createdUser] = await db.insert(users).values({
+        ...user,
+        password: await hashPassword("password123")
+      }).returning().onConflictDoNothing();
+      if (createdUser) createdInfluencers.push(createdUser);
+    }
+
+    // Add creator profiles from CSV data
+    const realCreators = [
+      {
+        userId: createdInfluencers[0]?.id,
+        username: "dimpisanghvi_ws",
+        displayName: "Dimpi Sanghvi",
+        bio: "Luxury lifestyle & travel influencer (E4M award)",
+        niche: "Travel",
+        followersCount: 5000000,
+        engagementRate: "3.10",
+        averageRate: 150000,
+        location: "India",
+        profileImageUrl: "https://randomuser.me/api/portraits/women/20.jpg",
+        tags: ["travel", "lifestyle"]
+      },
+      {
+        userId: createdInfluencers[1]?.id,
+        username: "iamshashh",
+        displayName: "Shashank Sanghvi",
+        bio: "Luxury travel influencer, connoisseur of cars & hotels",
+        niche: "Travel",
+        followersCount: 3400000,
+        engagementRate: "2.80",
+        averageRate: 120000,
+        location: "India",
+        profileImageUrl: "https://randomuser.me/api/portraits/men/25.jpg",
+        tags: ["travel", "luxury"]
+      },
+      {
+        userId: createdInfluencers[2]?.id,
+        username: "mallu_traveler",
+        displayName: "Shakir Subhan",
+        bio: "Travel vlogger exploring 80+ countries",
+        niche: "Travel",
+        followersCount: 2300000,
+        engagementRate: "4.00",
+        averageRate: 80000,
+        location: "India",
+        profileImageUrl: "https://randomuser.me/api/portraits/men/30.jpg",
+        tags: ["travel", "vlogging"]
+      },
+      {
+        userId: createdInfluencers[3]?.id,
+        username: "shenaztreasury",
+        displayName: "Shenaz Treasurywala",
+        bio: "Sustainable travel & wellness blogger, collects smiles",
+        niche: "Travel",
+        followersCount: 1400000,
+        engagementRate: "4.50",
+        averageRate: 90000,
+        location: "India",
+        profileImageUrl: "https://randomuser.me/api/portraits/women/25.jpg",
+        tags: ["travel", "wellness"]
+      },
+      {
+        userId: createdInfluencers[4]?.id,
+        username: "brindasharma",
+        displayName: "Brinda Sharma",
+        bio: "Motorcycle travel influencer; founder of Waqa Coffee",
+        niche: "Travel",
+        followersCount: 1300000,
+        engagementRate: "3.90",
+        averageRate: 85000,
+        location: "India",
+        profileImageUrl: "https://randomuser.me/api/portraits/women/30.jpg",
+        tags: ["travel", "motorcycle"]
+      },
+      {
+        userId: createdInfluencers[5]?.id,
+        username: "poojadhingra",
+        displayName: "Pooja Dhingra",
+        bio: "Pastry chef & entrepreneur (Le15 Patisserie founder)",
+        niche: "Food",
+        followersCount: 7000000,
+        engagementRate: "4.00",
+        averageRate: 200000,
+        location: "Mumbai, India",
+        profileImageUrl: "https://randomuser.me/api/portraits/women/35.jpg",
+        tags: ["food", "pastry"]
+      },
+      {
+        userId: createdInfluencers[6]?.id,
+        username: "masterchefshiprakhanna",
+        displayName: "Shipra Khanna",
+        bio: "Celebrity chef (MasterChef India winner) & author",
+        niche: "Food",
+        followersCount: 6200000,
+        engagementRate: "4.50",
+        averageRate: 180000,
+        location: "India",
+        profileImageUrl: "https://randomuser.me/api/portraits/women/40.jpg",
+        tags: ["food", "chef"]
+      },
+      {
+        userId: createdInfluencers[7]?.id,
+        username: "vikaskhannagroup",
+        displayName: "Vikas Khanna",
+        bio: "Michelin-star chef & restaurateur (global presence)",
+        niche: "Food",
+        followersCount: 5400000,
+        engagementRate: "3.90",
+        averageRate: 150000,
+        location: "India",
+        profileImageUrl: "https://randomuser.me/api/portraits/men/35.jpg",
+        tags: ["food", "gourmet"]
+      },
+      {
+        userId: createdInfluencers[8]?.id,
+        username: "ranveer.brar",
+        displayName: "Ranveer Brar",
+        bio: "Chef, author & TV host known as \"The Food Sufi\"",
+        niche: "Food",
+        followersCount: 4400000,
+        engagementRate: "4.20",
+        averageRate: 160000,
+        location: "India",
+        profileImageUrl: "https://randomuser.me/api/portraits/men/40.jpg",
+        tags: ["food", "television"]
+      },
+      {
+        userId: createdInfluencers[9]?.id,
+        username: "chefkunal",
+        displayName: "Kunal Kapur",
+        bio: "Celebrity chef & restaurateur from MasterChef India",
+        niche: "Food",
+        followersCount: 3800000,
+        engagementRate: "4.10",
+        averageRate: 150000,
+        location: "India",
+        profileImageUrl: "https://randomuser.me/api/portraits/men/45.jpg",
+        tags: ["food", "cooking"]
+      },
+      {
+        userId: createdInfluencers[10]?.id,
+        username: "shivesh17",
+        displayName: "Shivesh Bhatia",
+        bio: "Home baker & cookbook author (Forbes 30 Under 30 Asia)",
+        niche: "Food",
+        followersCount: 3400000,
+        engagementRate: "3.80",
+        averageRate: 140000,
+        location: "New Delhi, India",
+        profileImageUrl: "https://randomuser.me/api/portraits/men/50.jpg",
+        tags: ["food", "baking"]
+      },
+      {
+        userId: createdInfluencers[11]?.id,
+        username: "neeraj____chopra",
+        displayName: "Neeraj Chopra",
+        bio: "Olympic javelin champion & sports influencer",
+        niche: "Sports",
+        followersCount: 8400000,
+        engagementRate: "6.60",
+        averageRate: 200000,
+        location: "Haryana, India",
+        profileImageUrl: "https://randomuser.me/api/portraits/men/55.jpg",
+        tags: ["sports", "fitness"]
+      },
+      {
+        userId: createdInfluencers[12]?.id,
+        username: "technicalguruji",
+        displayName: "Gaurav Chaudhary",
+        bio: "YouTuber sharing tech gadget reviews; engineer by education",
+        niche: "Tech",
+        followersCount: 6100000,
+        engagementRate: "4.00",
+        averageRate: 180000,
+        location: "Dubai, UAE",
+        profileImageUrl: "https://randomuser.me/api/portraits/men/60.jpg",
+        tags: ["tech", "gadgets"]
+      },
+      {
+        userId: createdInfluencers[13]?.id,
+        username: "techburner",
+        displayName: "Shlok Srivastava",
+        bio: "Tech content creator (smartphones & gadgets)",
+        niche: "Tech",
+        followersCount: 4600000,
+        engagementRate: "4.20",
+        averageRate: 150000,
+        location: "India",
+        profileImageUrl: "https://randomuser.me/api/portraits/men/65.jpg",
+        tags: ["tech", "gadgets"]
+      },
+      {
+        userId: createdInfluencers[14]?.id,
+        username: "techplusgadgets",
+        displayName: "Naman Deshmukh",
+        bio: "Tech reviewer; Forbes100 creator focusing on gadgets",
+        niche: "Tech",
+        followersCount: 3600000,
+        engagementRate: "4.50",
+        averageRate: 130000,
+        location: "India",
+        profileImageUrl: "https://randomuser.me/api/portraits/men/70.jpg",
+        tags: ["tech", "reviews"]
+      },
+      {
+        userId: createdInfluencers[15]?.id,
+        username: "dhruv_rathee",
+        displayName: "Dhruv Rathee",
+        bio: "YouTube educator on social/political issues (25M subs)",
+        niche: "Education",
+        followersCount: 14000000,
+        engagementRate: "6.00",
+        averageRate: 200000,
+        location: "Germany",
+        profileImageUrl: "https://randomuser.me/api/portraits/men/75.jpg",
+        tags: ["education", "politics"]
+      },
+      {
+        userId: createdInfluencers[16]?.id,
+        username: "physicswallah",
+        displayName: "Alakh Pandey",
+        bio: "Founder of Physics Wallah; popular IIT/NEET educator",
+        niche: "Education",
+        followersCount: 4000000,
+        engagementRate: "7.00",
+        averageRate: 100000,
+        location: "Prayagraj, India",
+        profileImageUrl: "https://randomuser.me/api/portraits/men/80.jpg",
+        tags: ["education", "science"]
+      },
+      {
+        userId: createdInfluencers[17]?.id,
+        username: "vivek_bindra",
+        displayName: "Dr. Vivek Bindra",
+        bio: "Business coach & motivational speaker; founder of Bada Business",
+        niche: "Education",
+        followersCount: 3600000,
+        engagementRate: "5.50",
+        averageRate: 120000,
+        location: "Noida, India",
+        profileImageUrl: "https://randomuser.me/api/portraits/men/85.jpg",
+        tags: ["education", "business"]
+      }
+    ];
+
+    // Filter out creators with valid user IDs
+    const validCreators = realCreators.filter(creator => creator.userId);
+    
+    if (validCreators.length > 0) {
+      await db.insert(creators).values(validCreators).onConflictDoNothing();
+      console.log(`Added ${validCreators.length} real influencers to the database!`);
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();

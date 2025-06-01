@@ -471,6 +471,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add real influencers endpoint
+  app.post('/api/add-real-influencers', async (req, res) => {
+    try {
+      await storage.addRealInfluencers();
+      res.status(200).json({ message: "Real influencers added successfully" });
+    } catch (error) {
+      console.error("Error adding real influencers:", error);
+      res.status(500).json({ message: "Failed to add real influencers" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
