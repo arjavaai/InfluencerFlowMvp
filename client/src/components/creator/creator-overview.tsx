@@ -67,7 +67,7 @@ export function CreatorOverview() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">This Month</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  ${monthlyEarnings.toLocaleString()}
+                  ₹{monthlyEarnings.toLocaleString()}
                 </p>
               </div>
             </div>

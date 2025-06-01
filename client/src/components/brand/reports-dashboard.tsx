@@ -145,7 +145,7 @@ export function ReportsDashboard() {
                       <TableCell>{reach.toLocaleString()}</TableCell>
                       <TableCell>{engagement.toLocaleString()}</TableCell>
                       <TableCell>{clicks.toLocaleString()}</TableCell>
-                      <TableCell>${payment.amount}</TableCell>
+                      <TableCell>₹{payment.amount}</TableCell>
                       <TableCell className="text-green-600 font-medium">
                         {roi}x
                       </TableCell>

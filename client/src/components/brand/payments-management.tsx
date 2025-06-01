@@ -211,7 +211,7 @@ function StripePaymentForm({ paymentId, amount, onSuccess }: { paymentId: number
         disabled={!stripe || isProcessing}
         className="w-full"
       >
-        {isProcessing ? "Processing..." : `Pay $${amount}`}
+        {isProcessing ? "Processing..." : `Pay ₹${amount}`}
       </Button>
     </form>
   );
@@ -349,7 +349,7 @@ export function PaymentsManagement() {
                         {payment.contract.offer.campaign.name}
                       </TableCell>
                       <TableCell className="font-medium">
-                        ${payment.amount}
+                        ₹{payment.amount}
                       </TableCell>
                       <TableCell>
                         {format(new Date(payment.dueDate), "MMM dd, yyyy")}
