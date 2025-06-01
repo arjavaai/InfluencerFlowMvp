@@ -433,13 +433,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Only brands can create payment intents" });
       }
 
+      // Get payment details for description
+      const payment = await storage.getPayment(paymentId);
+      if (!payment) {
+        return res.status(404).json({ message: "Payment not found" });
+      }
+
       // Create a PaymentIntent with Stripe
       const paymentIntent = await stripe.paymentIntents.create({
         amount: Math.round(amount * 100), // Convert to cents
         currency: 'usd',
+        description: `Influencer Marketing Payment - Campaign Services - Payment ID: ${paymentId}`,
         metadata: {
           paymentId: paymentId.toString(),
           brandId: brand.id.toString(),
+          service_type: 'influencer_marketing',
+          export_type: 'services',
         },
       });
 
