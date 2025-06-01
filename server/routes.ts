@@ -2,6 +2,9 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
+import Stripe from "stripe";
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 // Middleware to check if user is authenticated
 function isAuthenticated(req: any, res: any, next: any) {
@@ -416,6 +419,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error marking payment as paid:", error);
       res.status(500).json({ message: "Failed to mark payment as paid" });
+    }
+  });
+
+  // Stripe payment intent creation
+  app.post('/api/create-payment-intent', isAuthenticated, async (req: any, res) => {
+    try {
+      const { paymentId, amount } = req.body;
+      const userId = req.user.id;
+      const brand = await storage.getBrandByUserId(userId);
+      
+      if (!brand) {
+        return res.status(403).json({ message: "Only brands can create payment intents" });
+      }
+
+      // Create a PaymentIntent with Stripe
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(amount * 100), // Convert to cents
+        currency: 'usd',
+        metadata: {
+          paymentId: paymentId.toString(),
+          brandId: brand.id.toString(),
+        },
+      });
+
+      res.json({ clientSecret: paymentIntent.client_secret });
+    } catch (error: any) {
+      console.error("Error creating payment intent:", error);
+      res.status(500).json({ message: "Error creating payment intent: " + error.message });
     }
   });
 

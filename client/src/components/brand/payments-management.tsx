@@ -4,10 +4,89 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { CreditCard } from "lucide-react";
+import { CreditCard, DollarSign } from "lucide-react";
 import { format } from "date-fns";
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
+import { useState } from "react";
+
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+
+// Stripe Payment Form Component
+function StripePaymentForm({ paymentId, amount, onSuccess }: { paymentId: number; amount: string; onSuccess: () => void }) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const { toast } = useToast();
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!stripe || !elements) {
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      const { error } = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          return_url: window.location.origin,
+        },
+        redirect: 'if_required',
+      });
+
+      if (error) {
+        toast({
+          title: "Payment Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        // Mark payment as paid in the backend
+        await apiRequest("PATCH", `/api/payments/${paymentId}/mark-paid`);
+        toast({
+          title: "Payment Successful",
+          description: "Payment processed successfully!",
+        });
+        onSuccess();
+      }
+    } catch (error) {
+      toast({
+        title: "Payment Failed",
+        description: "An error occurred processing the payment.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="p-4 bg-gray-50 rounded-lg">
+        <div className="flex justify-between items-center mb-4">
+          <span className="text-sm text-gray-600">Payment Amount:</span>
+          <span className="text-lg font-semibold">${amount}</span>
+        </div>
+      </div>
+      
+      <PaymentElement />
+      
+      <Button 
+        type="submit" 
+        disabled={!stripe || isProcessing}
+        className="w-full"
+      >
+        {isProcessing ? "Processing..." : `Pay $${amount}`}
+      </Button>
+    </form>
+  );
+}
 
 export function PaymentsManagement() {
   const { data: payments, isLoading } = useQuery({
@@ -16,6 +95,23 @@ export function PaymentsManagement() {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [paymentIntents, setPaymentIntents] = useState<Record<number, string>>({});
+
+  const createPaymentIntentMutation = useMutation({
+    mutationFn: async (payment: any) => {
+      const response = await apiRequest("POST", "/api/create-payment-intent", {
+        paymentId: payment.id,
+        amount: parseFloat(payment.amount),
+      });
+      return response.json();
+    },
+    onSuccess: (data, payment) => {
+      setPaymentIntents(prev => ({
+        ...prev,
+        [payment.id]: data.clientSecret
+      }));
+    },
+  });
 
   const markPaidMutation = useMutation({
     mutationFn: async (paymentId: number) => {
@@ -136,15 +232,63 @@ export function PaymentsManagement() {
                       </TableCell>
                       <TableCell>
                         {canMarkPaid ? (
-                          <Button
-                            size="sm"
-                            onClick={() => markPaidMutation.mutate(payment.id)}
-                            disabled={markPaidMutation.isPending}
-                            className="bg-green-600 hover:bg-green-700 text-white"
-                          >
-                            <CreditCard className="h-4 w-4 mr-2" />
-                            {markPaidMutation.isPending ? "Processing..." : "Mark as Paid"}
-                          </Button>
+                          <div className="flex space-x-2">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  onClick={() => createPaymentIntentMutation.mutate(payment)}
+                                  disabled={createPaymentIntentMutation.isPending}
+                                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                                >
+                                  <DollarSign className="h-4 w-4 mr-2" />
+                                  {createPaymentIntentMutation.isPending ? "Setting up..." : "Pay with Stripe"}
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="sm:max-w-md">
+                                <DialogHeader>
+                                  <DialogTitle>Process Payment</DialogTitle>
+                                </DialogHeader>
+                                {paymentIntents[payment.id] ? (
+                                  <Elements 
+                                    stripe={stripePromise} 
+                                    options={{ 
+                                      clientSecret: paymentIntents[payment.id],
+                                      appearance: { theme: 'stripe' }
+                                    }}
+                                  >
+                                    <StripePaymentForm 
+                                      paymentId={payment.id}
+                                      amount={payment.amount}
+                                      onSuccess={() => {
+                                        queryClient.invalidateQueries({ queryKey: ["/api/payments"] });
+                                        setPaymentIntents(prev => {
+                                          const newState = { ...prev };
+                                          delete newState[payment.id];
+                                          return newState;
+                                        });
+                                      }}
+                                    />
+                                  </Elements>
+                                ) : (
+                                  <div className="text-center p-4">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                                    <p className="mt-2 text-sm text-gray-600">Setting up payment...</p>
+                                  </div>
+                                )}
+                              </DialogContent>
+                            </Dialog>
+                            
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => markPaidMutation.mutate(payment.id)}
+                              disabled={markPaidMutation.isPending}
+                            >
+                              <CreditCard className="h-4 w-4 mr-2" />
+                              {markPaidMutation.isPending ? "Processing..." : "Mark as Paid"}
+                            </Button>
+                          </div>
                         ) : payment.status === "paid" ? (
                           <span className="text-green-600 text-sm font-medium">
                             Paid {payment.paidAt && format(new Date(payment.paidAt), "MMM dd")}
