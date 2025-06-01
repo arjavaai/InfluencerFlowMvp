@@ -16,7 +16,7 @@ export function RoleSelection() {
       return await apiRequest("POST", `/api/user/role`, { role });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       toast({
         title: "Role Selected",
         description: `You're now set up as a ${selectedRole}!`,

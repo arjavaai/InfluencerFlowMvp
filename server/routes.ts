@@ -68,7 +68,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             industry: 'Technology',
             website: '',
             description: 'A growing company looking for influencer partnerships',
-            isVerified: false,
           });
         }
       } else if (role === 'creator') {
@@ -80,12 +79,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             displayName: `${updatedUser.firstName || 'Creator'} ${updatedUser.lastName || ''}`.trim(),
             bio: 'Content creator passionate about engaging with audiences',
             niche: 'Lifestyle',
-            platform: 'Instagram',
             followersCount: 10000,
-            engagementRate: 3.5,
+            engagementRate: "3.5",
+            averageRate: "500",
             location: 'United States',
             isActive: true,
-            isVerified: false,
           });
         }
       }
